@@ -25,6 +25,101 @@
           MSc in Cybersecurity · A.Y. 2026/27
         </span>
       </header>
+      <section class="curve-panel" aria-labelledby="statistics-title">
+        <h2 id="statistics-title">Statistical exploration</h2>
+      
+        <p>
+          We enumerate every nonzero scalar k from 1 to n − 1,
+          where n is the order of the selected base point.
+          Each scalar is counted once.
+        </p>
+      
+        <div class="experiment-controls">
+          <label for="statistics-base">Base point</label>
+          <select id="statistics-base">
+            <option value="1,5">G = (1, 5)</option>
+            <option value="6,6">B = (6, 6)</option>
+          </select>
+        </div>
+      
+        <p id="statistics-summary" class="notice"></p>
+      
+        <div class="statistics-grid">
+          <div>
+            <h3>Frequency of x coordinates</h3>
+            <div id="x-frequency"></div>
+          </div>
+      
+          <div>
+            <h3>Frequency of y coordinates</h3>
+            <div id="y-frequency"></div>
+          </div>
+        </div>
+      
+        <h3>Bit distribution</h3>
+      
+        <p class="desc">
+          Coordinates use unsigned 5-bit binary encoding.
+          Bit 0 is the least significant bit.
+          Each percentage is the fraction of outputs with that bit set to 1.
+        </p>
+      
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Frequency of 1s at each bit position</caption>
+            <thead>
+              <tr>
+                <th scope="col">Bit position</th>
+                <th scope="col">x coordinate</th>
+                <th scope="col">y coordinate</th>
+              </tr>
+            </thead>
+            <tbody id="bit-statistics"></tbody>
+          </table>
+        </div>
+      
+        <h3>Input–output correlation</h3>
+        <p id="correlation-result"></p>
+      
+        <h3>One-bit input changes</h3>
+        <p id="avalanche-result"></p>
+      
+        <p class="desc">
+          We flip one bit of k and retain only pairs where both keys
+          belong to 1,…,n − 1. Each unordered pair is counted once.
+          Output distance is measured on the 10-bit encoding x || y.
+        </p>
+      
+        <h3>Interpretation and limitations</h3>
+        <ul>
+          <li>
+            Uniform sampling of the valid scalars gives uniform sampling
+            of the non-identity points in the generated subgroup.
+            It does not imply uniform coordinate frequencies.
+          </li>
+          <li>
+            Opposite points share the same x coordinate:
+            (n − k)B = −kB. A point with y = 0 is its own opposite.
+          </li>
+          <li>
+            Coordinate bits need not be balanced. Their distribution
+            depends on the curve, the subgroup and the chosen encoding.
+          </li>
+          <li>
+            Pearson correlation measures linear association only.
+            A zero coefficient does not establish independence or security.
+          </li>
+          <li>
+            Hamming distances describe this finite experiment.
+            They do not prove the strict avalanche criterion or establish
+            that scalar multiplication behaves like a cryptographic hash.
+          </li>
+          <li>
+            The toy curve is easy to invert by enumeration.
+            These results do not measure the security of secp256k1.
+          </li>
+        </ul>
+      </section>
       <main id="main">
         <a class="back" href="index.html">
           ← All homework
