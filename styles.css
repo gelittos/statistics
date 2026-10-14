@@ -280,3 +280,12 @@ body,h1,h1 span,h2,h3 {
     grid-template-columns: 1fr;
   }
 }
+.hash-example {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 16px;
+  background: #eef1ed;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.7;
+}
