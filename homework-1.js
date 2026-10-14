@@ -331,3 +331,220 @@ keyForm.addEventListener("submit", (event) => {
 
 // Mostra subito l'esempio iniziale k = 6.
 updateExperiment();
+// ---------- Statistical exploration ----------
+
+const statisticsBase = document.querySelector("#statistics-base");
+
+// Enumera il sottogruppo fino al primo ritorno a O.
+function enumerateSubgroup(base) {
+  const outputs = [];
+  let point = null;
+
+  // L'ordine non può superare il numero totale di punti.
+  const maximumOrder = curvePoints.length + 1;
+
+  for (let k = 1; k <= maximumOrder; k++) {
+    point = addPoints(point, base);
+
+    if (point === null) {
+      return { order: k, outputs };
+    }
+
+    outputs.push({ k, point });
+  }
+
+  throw new Error("Could not determine the base point order.");
+}
+
+function coordinateFrequencies(outputs, coordinate) {
+  const counts = Array(P).fill(0);
+
+  for (const { point } of outputs) {
+    counts[point[coordinate]]++;
+  }
+
+  return counts;
+}
+
+function renderFrequencies(containerId, counts, maximum) {
+  const container = document.getElementById(containerId);
+  container.replaceChildren();
+
+  const scale = document.createElement("p");
+  scale.className = "frequency-scale";
+  scale.textContent =
+    `Coordinate value → count. Both charts use a scale from 0 to ${maximum}.`;
+  container.append(scale);
+
+  counts.forEach((count, value) => {
+    const row = document.createElement("div");
+    row.className = "frequency-row";
+    row.setAttribute(
+      "aria-label",
+      `Coordinate ${value}: ${count} occurrences`
+    );
+
+    const label = document.createElement("span");
+    label.textContent = value;
+
+    const track = document.createElement("div");
+    track.className = "frequency-track";
+    track.setAttribute("aria-hidden", "true");
+
+    const bar = document.createElement("div");
+    bar.className = "frequency-bar";
+    bar.style.width = `${100 * count / maximum}%`;
+    track.append(bar);
+
+    const total = document.createElement("span");
+    total.textContent = count;
+
+    row.append(label, track, total);
+    container.append(row);
+  });
+}
+
+function pearsonCorrelation(a, b) {
+  const mean = values =>
+    values.reduce((sum, value) => sum + value, 0) / values.length;
+
+  const meanA = mean(a);
+  const meanB = mean(b);
+
+  let covariance = 0;
+  let varianceA = 0;
+  let varianceB = 0;
+
+  for (let i = 0; i < a.length; i++) {
+    const da = a[i] - meanA;
+    const db = b[i] - meanB;
+
+    covariance += da * db;
+    varianceA += da ** 2;
+    varianceB += db ** 2;
+  }
+
+  const denominator = Math.sqrt(varianceA * varianceB);
+
+  return denominator === 0 ? null : covariance / denominator;
+}
+
+// Conta i bit uguali a 1.
+function countOnes(value) {
+  let count = 0;
+
+  while (value > 0) {
+    count += value & 1;
+    value >>>= 1;
+  }
+
+  return count;
+}
+
+function analyzeBitFlips(outputs, order) {
+  const pointByKey = new Map(
+    outputs.map(({ k, point }) => [k, point])
+  );
+
+  const keyWidth = (order - 1).toString(2).length;
+  const distances = [];
+
+  for (const { k, point } of outputs) {
+    for (let bit = 0; bit < keyWidth; bit++) {
+      const changedKey = k ^ (1 << bit);
+
+      // Esclude chiavi non valide e conta ogni coppia una volta.
+      if (changedKey <= k || changedKey >= order) continue;
+
+      const changedPoint = pointByKey.get(changedKey);
+
+      const distance =
+        countOnes(point.x ^ changedPoint.x) +
+        countOnes(point.y ^ changedPoint.y);
+
+      distances.push(distance);
+    }
+  }
+
+  return distances;
+}
+
+function updateStatistics() {
+  const [x, y] = statisticsBase.value.split(",").map(Number);
+  const base = { x, y };
+  const { order, outputs } = enumerateSubgroup(base);
+  const sampleSize = outputs.length;
+
+  document.querySelector("#statistics-summary").textContent =
+    `Base ${formatPoint(base)} has order n = ${order}. ` +
+    `We analyze all ${sampleSize} distinct non-identity outputs ` +
+    `for k = 1,…,${order - 1}. This is a complete enumeration, ` +
+    `not a random sample.`;
+
+  const xCounts = coordinateFrequencies(outputs, "x");
+  const yCounts = coordinateFrequencies(outputs, "y");
+  const maximum = Math.max(...xCounts, ...yCounts);
+
+  renderFrequencies("x-frequency", xCounts, maximum);
+  renderFrequencies("y-frequency", yCounts, maximum);
+
+  // Frequenze dei bit delle coordinate.
+  const bitTable = document.querySelector("#bit-statistics");
+  bitTable.replaceChildren();
+
+  for (let bit = 0; bit < 5; bit++) {
+    const percentage = coordinate => {
+      const ones = outputs.reduce(
+        (sum, { point }) => sum + ((point[coordinate] >> bit) & 1),
+        0
+      );
+
+      return `${(100 * ones / sampleSize).toFixed(1)}%`;
+    };
+
+    const row = document.createElement("tr");
+
+    for (const value of [bit, percentage("x"), percentage("y")]) {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.append(cell);
+    }
+
+    bitTable.append(row);
+  }
+
+  const keys = outputs.map(output => output.k);
+  const xs = outputs.map(output => output.point.x);
+  const ys = outputs.map(output => output.point.y);
+
+  const formatCorrelation = value =>
+    value === null ? "undefined (zero variance)" : value.toFixed(3);
+
+  document.querySelector("#correlation-result").textContent =
+    `Pearson r(k, x) = ${formatCorrelation(pearsonCorrelation(keys, xs))}; ` +
+    `r(k, y) = ${formatCorrelation(pearsonCorrelation(keys, ys))}. ` +
+    `These coefficients describe the selected enumeration only.`;
+
+  const distances = analyzeBitFlips(outputs, order);
+  const avalancheResult = document.querySelector("#avalanche-result");
+
+  if (distances.length === 0) {
+    avalancheResult.textContent = "No valid one-bit pairs are available.";
+    return;
+  }
+
+  const average =
+    distances.reduce((sum, value) => sum + value, 0) / distances.length;
+
+  avalancheResult.textContent =
+    `${distances.length} distinct valid key pairs differ by one input bit. ` +
+    `Mean output Hamming distance: ${average.toFixed(2)} of 10 bits ` +
+    `(${(100 * average / 10).toFixed(1)}%). ` +
+    `Minimum: ${Math.min(...distances)}; ` +
+    `maximum: ${Math.max(...distances)}. ` +
+    `Pairs leaving the valid key range are excluded, so this is a ` +
+    `restricted comparison rather than an unrestricted avalanche test.`;
+}
+
+statisticsBase.addEventListener("change", updateStatistics);
+updateStatistics();
