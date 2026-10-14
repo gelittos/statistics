@@ -46,14 +46,52 @@
             </time>
           </p>
         </section>
-        <div class="notice">
-          <strong>
-            Coming soon
-          </strong>
+        <section aria-labelledby="experiment-title">
+          <h2 id="experiment-title">From private key to public key</h2>
           <p>
-            This page is reserved for the homework report and its experiments.
+            We use the toy curve y² ≡ x³ + 7 (mod 17),
+            with base point G = (1, 5).
+            The public key Q = kG is computed by repeated point addition.
           </p>
-        </div>
+          <p class="notice">
+            Educational example only. This small curve is not secure.
+            Ethereum uses secp256k1, with much larger parameters.
+          </p>
+          <form id="key-form" class="experiment-controls">
+            <label for="private-key">Private scalar k</label>
+            <input id="private-key"
+              name="private-key"
+              type="number"
+              min="1"
+              max="1000"
+              step="1"
+              value="6"
+              required
+              aria-describedby="key-help"
+              >
+            <button type="submit">Compute public key</button>
+          </form>
+          <p id="key-help" class="desc">
+            Explore integers from 1 to 1000. Since G has order 9,
+            the results repeat every 9 values. The distinct nonzero
+            private keys for this toy subgroup are 1 to 8.
+          </p>
+          <p id="calculation-error" role="alert"></p>
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Successive multiples of G</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Multiple</th>
+                  <th scope="col">Operation</th>
+                  <th scope="col">Result</th>
+                </tr>
+              </thead>
+              <tbody id="multiples-body"></tbody>
+            </table>
+          </div>
+          <p id="public-key-result" class="key-result" aria-live="polite"></p>
+        </section>
       </main>
       <footer>
         <span>
