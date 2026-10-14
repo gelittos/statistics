@@ -324,6 +324,278 @@
             Encoding makes data readable but does not encrypt it.
           </p>
         </section>
+        <section class="curve-panel" aria-labelledby="wallet-statistics-title">
+          <h2 id="wallet-statistics-title">Statistical properties</h2>
+        
+          <h3>Entropy is not the same as length</h3>
+          <p>
+            With ideal random generation, every 128-bit entropy value
+            has the same probability. Each individual bit has probability
+            one half of being 1.
+          </p>
+          <p>
+            A 12-word BIP-39 mnemonic encodes 128 entropy bits and
+            4 checksum bits. Only one in sixteen arbitrary sequences
+            of twelve words from the wordlist satisfies the checksum.
+            This is a statement about uniformly chosen word sequences,
+            not an exact detection rate for every kind of typing mistake.
+          </p>
+          <p>
+            The derived seed is 512 bits long, but this does not create
+            512 bits of entropy. With a fixed passphrase, a deterministic
+            transformation of 128 random bits has at most 128 bits of
+            entropy. Output length and unpredictability are different.
+          </p>
+        
+          <h3>Derived keys and public points</h3>
+          <p>
+            Seed and child-key values are intended to appear random
+            to an observer without the secret material. Nevertheless,
+            they are determined by the mnemonic, passphrase and path.
+            Derived keys are not independent sources of new randomness.
+          </p>
+          <p>
+            Uniform private scalars on secp256k1 correspond to uniform
+            non-identity public points. This does not imply that the
+            coordinates are independent: they must satisfy the curve
+            equation, as illustrated in Homework 1.
+          </p>
+        
+          <h3>Hash output and address truncation</h3>
+          <p>
+            Under an ideal-hash model, digest bits are balanced and
+            a one-bit input change affects about half the output bits
+            on average. Individual trials need not change exactly half.
+          </p>
+          <p>
+            Keeping the final 160 bits gives an address space of
+            2^160 values. Under a uniform-output model, two independently
+            sampled outputs match with probability 2^-160.
+            Generic collision search reaches the birthday scale around
+            2^80 samples. Collision search and finding a preimage for
+            a particular address are different problems.
+          </p>
+        
+          <h3>EIP-55 error detection</h3>
+          <p>
+            In a uniformly distributed hexadecimal address, each of
+            the 40 characters is a letter with probability 6/16.
+            Therefore the expected number of letters is
+            40 × 6/16 = 15. Each letter can carry a case-check bit.
+          </p>
+          <p>
+            EIP-55 reports an accidental acceptance probability of
+            approximately 0.0247% under its random-error model.
+            This is an average across addresses, not a guarantee for
+            every possible typo or a protection against deliberate
+            address replacement.
+          </p>
+        </section>
+        
+        <section class="curve-panel" aria-labelledby="hash-lab-title">
+          <h2 id="hash-lab-title">Experiment: change one input bit</h2>
+        
+          <p>
+            Each trial generates a random 32-byte message, copies it,
+            and flips exactly one uniformly selected input bit.
+            We compute Keccak-256 for both messages and count the
+            differing output bits.
+          </p>
+        
+          <p>
+            The experiment runs 500 trials. It also counts the fraction
+            of 1s in the original-message digests. These are random test
+            messages, not private keys or wallet recovery phrases.
+          </p>
+        
+          <div class="experiment-controls">
+            <button id="run-hash-experiment" type="button">
+              Run 500 trials
+            </button>
+          </div>
+        
+          <p id="hash-status" role="status" aria-live="polite">
+            No experiment has been run yet.
+          </p>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Measured results</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Measurement</th>
+                  <th scope="col">Observed value</th>
+                </tr>
+              </thead>
+              <tbody id="hash-results"></tbody>
+            </table>
+          </div>
+        
+          <h3>First trial</h3>
+          <pre id="hash-example" class="hash-example"></pre>
+        
+          <p class="notice">
+            For an ideal 256-bit hash, the Hamming distance has
+            mean 128 and standard deviation 8 under the independent-bit
+            model. Results near these values are consistent with that
+            model, but this small experiment cannot prove security,
+            independence or the strict avalanche criterion.
+          </p>
+        </section>
+        
+        <section class="curve-panel" aria-labelledby="hash-families-title">
+          <h2 id="hash-families-title">SHA-2, Keccak and SHA-3</h2>
+        
+          <p>
+            SHA-256 and SHA-512 belong to SHA-2.
+            SHA-2 uses an iterated compression-function construction.
+            Keccak uses a different construction called a sponge.
+          </p>
+        
+          <p>
+            Keccak was selected as the winner of the SHA-3 competition
+            in 2012. NIST standardized SHA-3 in 2015.
+            SHA-3 is based on Keccak, but Ethereum's Keccak-256 and
+            standardized SHA3-256 use different domain-separation
+            conventions and therefore produce different digests.
+          </p>
+        
+          <p>
+            For ordinary byte-aligned inputs, the commonly described
+            suffix bytes are 0x01 for Keccak-256 and 0x06 for SHA3-256.
+            The functions must not be used interchangeably.
+          </p>
+        
+          <p>
+            Example: the digests of the empty byte string are:
+          </p>
+        
+          <pre class="hash-example">Keccak-256:
+        c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470
+        
+        SHA3-256:
+        a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a</pre>
+        
+          <p>
+            SHA-512 inside HMAC or PBKDF2 does not replace Keccak-256
+            in address derivation. Each standard specifies which
+            primitive to use and how to use it.
+          </p>
+        </section>
+        
+        <section class="curve-panel" aria-labelledby="history-title">
+          <h2 id="history-title">Historical context</h2>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Approximate chronological order</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Technology</th>
+                  <th scope="col">Contribution</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1977</td>
+                  <td>RSA</td>
+                  <td>
+                    An influential public-key cryptosystem.
+                    It is historical context, not part of this wallet pipeline.
+                  </td>
+                </tr>
+                <tr>
+                  <td>2001–2002</td>
+                  <td>SHA-2 / SHA-512</td>
+                  <td>
+                    Early SHA-2 publication and standardization period.
+                    The final FIPS 180-2 standard was published in 2002.
+                  </td>
+                </tr>
+                <tr>
+                  <td>2012</td>
+                  <td>BIP-32</td>
+                  <td>Hierarchical deterministic key derivation.</td>
+                </tr>
+                <tr>
+                  <td>2013</td>
+                  <td>BIP-39</td>
+                  <td>Mnemonic encoding and seed derivation.</td>
+                </tr>
+                <tr>
+                  <td>2014</td>
+                  <td>BIP-44</td>
+                  <td>Standard organization of wallet derivation paths.</td>
+                </tr>
+                <tr>
+                  <td>2015</td>
+                  <td>SHA-3</td>
+                  <td>NIST standardization based on Keccak.</td>
+                </tr>
+                <tr>
+                  <td>2016</td>
+                  <td>EIP-55</td>
+                  <td>Mixed-case checksum encoding of Ethereum addresses.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        
+          <p>
+            These technologies were developed at different times for
+            different tasks. Wallet software combines them because
+            backup, key derivation, signatures, hashing and error
+            detection require different properties.
+          </p>
+        </section>
+        
+        <section class="curve-panel" aria-labelledby="sources-title">
+          <h2 id="sources-title">Sources and implementation</h2>
+        
+          <ul>
+            <li><a href="https://bips.dev/39/">BIP-39: mnemonic and seed</a></li>
+            <li><a href="https://bips.dev/32/">BIP-32: HD wallets</a></li>
+            <li><a href="https://bips.dev/44/">BIP-44: derivation paths</a></li>
+            <li>
+              <a href="https://www.secg.org/sec2-v2.pdf">
+                SEC 2: secp256k1 parameters
+              </a>
+            </li>
+            <li>
+              <a href="https://ethereum.org/en/developers/docs/accounts/">
+                Ethereum accounts and addresses
+              </a>
+            </li>
+            <li>
+              <a href="https://eips.ethereum.org/EIPS/eip-55">
+                EIP-55: checksum specification
+              </a>
+            </li>
+            <li>
+              <a href="https://csrc.nist.gov/pubs/fips/180-2/final">
+                NIST FIPS 180-2: SHA-2 standardization
+              </a>
+            </li>
+            <li>
+              <a href="https://www.nist.gov/news-events/news/2015/08/nist-releases-sha-3-cryptographic-hash-standard">
+                NIST: SHA-3 standardization
+              </a>
+            </li>
+            <li>
+              <a href="https://docs.ethers.org/v6/api/crypto/">
+                ethers.js: cryptographic functions
+              </a>
+            </li>
+          </ul>
+        
+          <p>
+            The experiment uses ethers.js 6.13.4 for Keccak-256 and
+            the browser's cryptographic random generator for test inputs.
+            It runs locally in the browser and does not require a wallet,
+            an account or a blockchain connection.
+          </p>
+        </section>
       </main>
       <footer>
         <span>
