@@ -84,8 +84,199 @@ const keyInput = document.querySelector("#private-key");
 const tableBody = document.querySelector("#multiples-body");
 const resultBox = document.querySelector("#public-key-result");
 const errorBox = document.querySelector("#calculation-error");
+const plot = document.querySelector("#curve-plot");
+const playButton = document.querySelector("#animation-play");
+const nextButton = document.querySelector("#animation-next");
+const resetButton = document.querySelector("#animation-reset");
+const animationStatus = document.querySelector("#animation-status");
+const infinityIndicator = document.querySelector("#infinity-indicator");
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+// Tutti i punti con coordinate nel campo da 0 a 16.
+const curvePoints = [];
+
+for (let x = 0; x < P; x++) {
+  for (let y = 0; y < P; y++) {
+    if (isOnCurve({ x, y })) {
+      curvePoints.push({ x, y });
+    }
+  }
+}
+
+let animationSteps = [];
+let animationIndex = 0;
+let animationTimer = null;
+
+// Converte le coordinate matematiche in coordinate SVG.
+// Nell'SVG y cresce verso il basso: per questo la invertiamo.
+const plotX = x => 50 + x * 23;
+const plotY = y => 400 - y * 23;
+
+function svgElement(tag, attributes, text = "") {
+  const element = document.createElementNS(SVG_NS, tag);
+
+  for (const [name, value] of Object.entries(attributes)) {
+    element.setAttribute(name, value);
+  }
+
+  if (text) element.textContent = text;
+  return element;
+}
+
+function pointKey(point) {
+  return `${point.x},${point.y}`;
+}
+
+function stopAnimation() {
+  clearInterval(animationTimer);
+  animationTimer = null;
+  playButton.textContent = "Play";
+}
+
+function renderAnimation() {
+  // Mantiene title e desc, sostituendo soltanto il disegno.
+  plot.querySelector(".plot-content")?.remove();
+
+  const drawing = svgElement("g", { class: "plot-content" });
+
+  for (let value = 0; value < P; value++) {
+    drawing.append(
+      svgElement("line", {
+        x1: plotX(value), y1: plotY(0),
+        x2: plotX(value), y2: plotY(16),
+        class: "plot-grid"
+      }),
+      svgElement("line", {
+        x1: plotX(0), y1: plotY(value),
+        x2: plotX(16), y2: plotY(value),
+        class: "plot-grid"
+      }),
+      svgElement("text", {
+        x: plotX(value), y: 420,
+        "text-anchor": "middle", class: "plot-label"
+      }, String(value)),
+      svgElement("text", {
+        x: 35, y: plotY(value) + 4,
+        "text-anchor": "end", class: "plot-label"
+      }, String(value))
+    );
+  }
+
+  drawing.append(
+    svgElement("text", {
+      x: 440, y: 405, class: "plot-label"
+    }, "x"),
+    svgElement("text", {
+      x: 46, y: 18, class: "plot-label"
+    }, "y")
+  );
+
+  const visited = new Set(
+    animationSteps
+      .slice(0, animationIndex)
+      .filter(step => step.point !== null)
+      .map(step => pointKey(step.point))
+  );
+
+  for (const point of curvePoints) {
+    const circle = svgElement("circle", {
+      cx: plotX(point.x),
+      cy: plotY(point.y),
+      r: 5,
+      class: visited.has(pointKey(point))
+        ? "curve-point visited"
+        : "curve-point"
+    });
+
+    circle.append(svgElement("title", {}, formatPoint(point)));
+    drawing.append(circle);
+  }
+
+  const current = animationIndex === 0
+    ? null
+    : animationSteps[animationIndex - 1].point;
+
+  if (current !== null) {
+    drawing.append(svgElement("circle", {
+      cx: plotX(current.x),
+      cy: plotY(current.y),
+      r: 10,
+      class: "current-ring"
+    }));
+  }
+
+  plot.append(drawing);
+  infinityIndicator.classList.toggle("active", current === null);
+
+  if (animationIndex === 0) {
+    animationStatus.textContent =
+      "Start: R = O. Press Next step or Play to add G.";
+  } else {
+    const previous = animationIndex === 1
+      ? null
+      : animationSteps[animationIndex - 2].point;
+
+    animationStatus.textContent =
+      `Step ${animationIndex}/${animationSteps.length}: ` +
+      `${formatPoint(previous)} + ${formatPoint(G)} = ` +
+      `${formatPoint(current)}. ` +
+      `Therefore ${animationIndex}G = ${formatPoint(current)}.`;
+  }
+
+  for (const [index, row] of [...tableBody.rows].entries()) {
+    row.classList.toggle("active-step", index === animationIndex - 1);
+  }
+
+  const finished = animationIndex >= animationSteps.length;
+  nextButton.disabled = finished;
+  playButton.disabled = animationSteps.length === 0;
+}
+
+function advanceAnimation() {
+  if (animationIndex < animationSteps.length) {
+    animationIndex++;
+    renderAnimation();
+  }
+
+  if (animationIndex >= animationSteps.length) {
+    stopAnimation();
+  }
+}
+
+function initializeAnimation(steps) {
+  stopAnimation();
+  animationSteps = steps;
+  animationIndex = 0;
+  renderAnimation();
+}
+
+nextButton.addEventListener("click", () => {
+  stopAnimation();
+  advanceAnimation();
+});
+
+resetButton.addEventListener("click", () => {
+  initializeAnimation(animationSteps);
+});
+
+playButton.addEventListener("click", () => {
+  if (animationTimer !== null) {
+    stopAnimation();
+    return;
+  }
+
+  // Se siamo alla fine, riparte dall'elemento neutro.
+  if (animationIndex >= animationSteps.length) {
+    animationIndex = 0;
+    renderAnimation();
+  }
+
+  playButton.textContent = "Pause";
+  animationTimer = setInterval(advanceAnimation, 800);
+});
 function updateExperiment() {
+  stopAnimation();
   tableBody.replaceChildren();
   resultBox.textContent = "";
   errorBox.textContent = "";
@@ -126,8 +317,10 @@ function updateExperiment() {
       resultBox.textContent =
         `TOY PUBLIC KEY: Q = ${k}G = ${formatPoint(publicKey)}`;
     }
+    initializeAnimation(steps);
   } catch (error) {
     errorBox.textContent = error.message;
+    initializeAnimation([]);
   }
 }
 
