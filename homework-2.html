@@ -46,14 +46,284 @@
             </time>
           </p>
         </section>
-        <div class="notice">
-          <strong>
-            Coming soon
-          </strong>
+        <section class="curve-panel" aria-labelledby="overview-title">
+          <h2 id="overview-title">From recovery words to an address</h2>
+        
           <p>
-            This page is reserved for the homework report and its experiments.
+            This report examines a common Ethereum wallet workflow based
+            on BIP-39, BIP-32 and BIP-44. These standards describe wallet
+            key management; Ethereum itself does not require every wallet
+            to use a mnemonic or this particular derivation path.
           </p>
-        </div>
+        
+          <p>
+            We consider an externally owned account controlled by a
+            private key. Contract addresses follow different creation rules.
+          </p>
+        
+          <ol>
+            <li>Generate random entropy.</li>
+            <li>Encode entropy and a checksum as a BIP-39 mnemonic.</li>
+            <li>Derive a seed from the mnemonic and an optional passphrase.</li>
+            <li>Derive a private key using BIP-32 and a BIP-44 path.</li>
+            <li>Compute the public key using secp256k1.</li>
+            <li>Hash the public key with Keccak-256 and retain 20 bytes.</li>
+            <li>Apply the EIP-55 mixed-case checksum.</li>
+          </ol>
+        
+          <p class="notice">
+            A mnemonic, a seed, a private key, a public key and an address
+            are different objects. In particular, an address is not a
+            public key, and a mnemonic is not the final binary seed.
+          </p>
+        </section>
+        
+        <section class="curve-panel" aria-labelledby="bip39-title">
+          <h2 id="bip39-title">1. BIP-39: mnemonic and seed</h2>
+        
+          <h3>From randomness to words</h3>
+        
+          <p>
+            The starting point is securely generated random entropy.
+            BIP-39 supports 128, 160, 192, 224 or 256 bits of entropy,
+            corresponding to 12, 15, 18, 21 or 24 words.
+          </p>
+        
+          <p>
+            A checksum is obtained from the first ENT / 32 bits of
+            SHA-256(entropy), where ENT is the entropy length.
+            The checksum is appended to the entropy. The resulting bits
+            are divided into groups of 11, each selecting one word from
+            a list of 2048 words.
+          </p>
+        
+          <p>
+            For example: 128 entropy bits + 4 checksum bits = 132 bits.
+            Dividing by 11 gives a 12-word mnemonic.
+            The checksum helps detect mistakes; it adds no new entropy.
+          </p>
+        
+          <h3>From words to a seed</h3>
+        
+          <p>
+            PBKDF2-HMAC-SHA512 uses the mnemonic as its password and
+            "mnemonic" followed by the optional passphrase as its salt.
+            Both strings use UTF-8 with NFKD normalization.
+            With 2048 iterations, it produces a 512-bit seed.
+          </p>
+        
+          <p>
+            An absent passphrase is an empty string. Changing the
+            passphrase produces a different wallet seed.
+            This passphrase is distinct from an application's local
+            password used to unlock its stored wallet data.
+          </p>
+        </section>
+        
+        <section class="curve-panel" aria-labelledby="bip32-title">
+          <h2 id="bip32-title">2. BIP-32: a tree of keys</h2>
+        
+          <p>
+            A hierarchical deterministic wallet derives a tree of keys
+            from one seed. "Deterministic" means that the same seed
+            and path reproduce the same keys.
+          </p>
+        
+          <p>
+            The master step computes HMAC-SHA512 with the fixed string
+            "Bitcoin seed" as its key and the seed as its data.
+            The left 32 bytes provide the candidate master private key;
+            the right 32 bytes provide the chain code.
+            Invalid master key values must be rejected.
+          </p>
+        
+          <p>
+            The chain code is additional derivation data used together
+            with a parent key and a child index. Child derivation uses
+            HMAC-SHA512 and arithmetic modulo the curve subgroup order.
+            It also defines how invalid child results are handled.
+          </p>
+        
+          <p>
+            Non-hardened derivation allows child public keys to be
+            obtained from an extended public key, without private keys.
+            Hardened derivation requires parent private-key material.
+            A prime symbol in a path marks a hardened level.
+          </p>
+        </section>
+        
+        <section class="curve-panel" aria-labelledby="bip44-title">
+          <h2 id="bip44-title">3. BIP-44: choosing a path</h2>
+        
+          <p>
+            BIP-44 organizes the BIP-32 tree. It is a path convention,
+            not a separate hashing or encryption algorithm.
+            Its general structure is:
+          </p>
+        
+          <p>
+            <code>m / purpose' / coin_type' / account' / change / address_index</code>
+          </p>
+        
+          <p>A common Ethereum path is:</p>
+        
+          <p><code>m/44'/60'/0'/0/0</code></p>
+        
+          <ul>
+            <li><strong>m:</strong> the master private node.</li>
+            <li><strong>44':</strong> the BIP-44 purpose.</li>
+            <li><strong>60':</strong> the Ethereum coin type.</li>
+            <li><strong>0':</strong> the first account.</li>
+            <li><strong>0:</strong> the external-address branch.</li>
+            <li><strong>0:</strong> the first address index.</li>
+          </ul>
+        
+          <p>
+            Changing the final index selects another child key.
+            Wallet implementations may use different account-discovery
+            conventions or paths. Recovering the intended account
+            requires the correct mnemonic, passphrase and path.
+          </p>
+        </section>
+        
+        <section class="curve-panel" aria-labelledby="public-key-title">
+          <h2 id="public-key-title">4. secp256k1: the public key</h2>
+        
+          <p>
+            The derived private key is a scalar k in the valid range
+            1 to n − 1, where n is the order of the secp256k1 base point.
+            Its public key is Q = kG.
+          </p>
+        
+          <p>
+            This is the same mathematical relationship explored in
+            Homework 1, but with cryptographic-size parameters.
+            The public key is a curve point with coordinates x and y.
+          </p>
+        
+          <p>
+            secp256k1 supplies the curve used for Ethereum's ECDSA
+            signatures. The private key signs; the public key is used
+            to verify signatures. Computing the public key is not
+            itself signing, hashing or encryption.
+          </p>
+        </section>
+        
+        <section class="curve-panel" aria-labelledby="address-title">
+          <h2 id="address-title">5. Keccak-256: the address</h2>
+        
+          <p>
+            Encode x and y as two 32-byte, big-endian values and
+            concatenate them. Hash these 64 bytes using Keccak-256.
+            If starting from the 65-byte uncompressed public-key
+            encoding, omit its initial 0x04 format byte.
+          </p>
+        
+          <p>
+            Keccak-256 produces 32 bytes. The Ethereum address consists
+            of its final 20 bytes, or 160 bits.
+            Hexadecimal encoding represents those bytes using
+            40 characters, usually preceded by "0x".
+          </p>
+        
+          <p class="notice">
+            Hash the public-key bytes, not their hexadecimal text.
+            Ethereum uses Keccak-256, which is different from
+            standardized SHA3-256.
+          </p>
+        </section>
+        
+        <section class="curve-panel" aria-labelledby="checksum-title">
+          <h2 id="checksum-title">6. EIP-55: the checksum</h2>
+        
+          <p>
+            EIP-55 adds error-detection information through the letter
+            case of the hexadecimal address. It does not change the
+            underlying 20-byte address.
+          </p>
+        
+          <ol>
+            <li>
+              Write the address as 40 lowercase hexadecimal characters,
+              without the "0x" prefix.
+            </li>
+            <li>
+              Compute Keccak-256 of that text using its ASCII/UTF-8 bytes.
+            </li>
+            <li>
+              For each address letter a–f, inspect the hash hexadecimal
+              digit at the same position. Use uppercase if its value is
+              at least 8; otherwise keep lowercase.
+            </li>
+            <li>
+              Leave numeric characters unchanged and restore "0x".
+            </li>
+          </ol>
+        
+          <p>
+            A validator can recompute this pattern to detect many typing
+            errors. The checksum does not prove ownership or protect
+            against someone deliberately replacing an address with
+            another correctly checksummed address.
+          </p>
+        </section>
+        
+        <section class="curve-panel" aria-labelledby="concepts-title">
+          <h2 id="concepts-title">Different tools, different purposes</h2>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Roles in the wallet pipeline</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Concept</th>
+                  <th scope="col">Purpose</th>
+                  <th scope="col">Example</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Key generation</th>
+                  <td>Establish fresh secret material using secure randomness.</td>
+                  <td>Initial random entropy for the wallet.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Key derivation</th>
+                  <td>Reproducibly obtain key material from an existing secret.</td>
+                  <td>BIP-39 seed derivation and BIP-32 child derivation.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Public-key cryptography</th>
+                  <td>Support signatures with related private and public keys.</td>
+                  <td>ECDSA using secp256k1.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Hashing</th>
+                  <td>Compute a fixed-length digest.</td>
+                  <td>Keccak-256 in address derivation.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Checksum</th>
+                  <td>Detect accidental errors.</td>
+                  <td>BIP-39 checksum bits and EIP-55 letter case.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Encoding</th>
+                  <td>Represent data in another reversible format.</td>
+                  <td>Binary groups as words; address bytes as hexadecimal.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        
+          <p>
+            Several primitives are needed because the tasks are different.
+            A mnemonic makes backup easier, a derivation scheme organizes
+            keys, public-key cryptography supports signatures, hashing
+            produces an address digest, and a checksum helps detect errors.
+            Encoding makes data readable but does not encrypt it.
+          </p>
+        </section>
       </main>
       <footer>
         <span>
