@@ -77,6 +77,20 @@
             private keys for this toy subgroup are 1 to 8.
           </p>
           <p id="calculation-error" role="alert"></p>
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Successive multiples of G</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Multiple</th>
+                  <th scope="col">Operation</th>
+                  <th scope="col">Result</th>
+                </tr>
+              </thead>
+              <tbody id="multiples-body"></tbody>
+            </table>
+          </div>
+          <p id="public-key-result" class="key-result" aria-live="polite"></p>
           <section class="curve-panel" aria-labelledby="curve-title">
             <h2 id="curve-title">Point addition, step by step</h2>
           
@@ -116,20 +130,6 @@
           
             <p id="animation-status" aria-live="polite"></p>
           </section>
-          <div class="table-scroll">
-            <table class="results-table">
-              <caption>Successive multiples of G</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Multiple</th>
-                  <th scope="col">Operation</th>
-                  <th scope="col">Result</th>
-                </tr>
-              </thead>
-              <tbody id="multiples-body"></tbody>
-            </table>
-          </div>
-          <p id="public-key-result" class="key-result" aria-live="polite"></p>
         </section>
         <section class="curve-panel" aria-labelledby="statistics-title">
           <h2 id="statistics-title">Statistical exploration</h2>
