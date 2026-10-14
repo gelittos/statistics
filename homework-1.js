@@ -79,13 +79,62 @@ function formatPoint(point) {
   return point === null ? "O (point at infinity)" : `(${point.x}, ${point.y})`;
 }
 
-// Prima verifica: risultati nella console del browser.
-const steps = calculateMultiples(6);
+const keyForm = document.querySelector("#key-form");
+const keyInput = document.querySelector("#private-key");
+const tableBody = document.querySelector("#multiples-body");
+const resultBox = document.querySelector("#public-key-result");
+const errorBox = document.querySelector("#calculation-error");
 
-for (const step of steps) {
-  console.log(`${step.multiple}G = ${formatPoint(step.point)}`);
+function updateExperiment() {
+  tableBody.replaceChildren();
+  resultBox.textContent = "";
+  errorBox.textContent = "";
+
+  try {
+    const k = keyInput.valueAsNumber;
+    const steps = calculateMultiples(k);
+
+    for (const step of steps) {
+      const row = document.createElement("tr");
+
+      const operation = step.multiple === 1
+        ? "O + G"
+        : `${step.multiple - 1}G + G`;
+
+      const values = [
+        `${step.multiple}G`,
+        operation,
+        formatPoint(step.point)
+      ];
+
+      for (const value of values) {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        row.appendChild(cell);
+      }
+
+      tableBody.appendChild(row);
+    }
+
+    const publicKey = steps[steps.length - 1].point;
+
+    if (publicKey === null) {
+      resultBox.textContent =
+        `Q = ${k}G = O (point at infinity). ` +
+        "This scalar produces the identity, which is not a valid public key.";
+    } else {
+      resultBox.textContent =
+        `TOY PUBLIC KEY: Q = ${k}G = ${formatPoint(publicKey)}`;
+    }
+  } catch (error) {
+    errorBox.textContent = error.message;
+  }
 }
 
-console.log(
-  `TOY PUBLIC KEY: ${formatPoint(steps[steps.length - 1].point)}`
-);
+keyForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  updateExperiment();
+});
+
+// Mostra subito l'esempio iniziale k = 6.
+updateExperiment();
