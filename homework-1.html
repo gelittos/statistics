@@ -77,6 +77,45 @@
             private keys for this toy subgroup are 1 to 8.
           </p>
           <p id="calculation-error" role="alert"></p>
+          <section class="curve-panel" aria-labelledby="curve-title">
+            <h2 id="curve-title">Point addition, step by step</h2>
+          
+            <p class="desc">
+              Each step adds G = (1, 5) to the current point.
+              The grid shows the 17 finite points of the curve.
+              The point at infinity O is shown separately.
+            </p>
+          
+            <div class="experiment-controls">
+              <button id="animation-play" type="button">Play</button>
+              <button id="animation-next" type="button">Next step</button>
+              <button id="animation-reset" type="button">Restart</button>
+            </div>
+          
+            <svg
+              id="curve-plot"
+              viewBox="0 0 460 450"
+              role="img"
+              aria-labelledby="plot-title plot-description"
+            >
+              <title id="plot-title">Toy elliptic curve over the field modulo 17</title>
+              <desc id="plot-description">
+                Finite curve points, with the current result highlighted.
+              </desc>
+            </svg>
+          
+            <div class="plot-legend">
+              <span><i class="legend-all"></i>Curve points</span>
+              <span><i class="legend-visited"></i>Visited points</span>
+              <span><i class="legend-current"></i>Current result (ring)</span>
+            </div>
+          
+            <p id="infinity-indicator" class="infinity-indicator">
+              O — point at infinity
+            </p>
+          
+            <p id="animation-status" aria-live="polite"></p>
+          </section>
           <div class="table-scroll">
             <table class="results-table">
               <caption>Successive multiples of G</caption>
