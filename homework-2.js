@@ -658,3 +658,147 @@ async function runEccExperiment() {
 eccButton.addEventListener("click", runEccExperiment);
 eccPrivateInput.addEventListener("input", clearEccResults);
 messageInput.addEventListener("input", clearEccResults);
+
+// ---------- Exhaustive search of the restricted ECC key space ----------
+
+const eccAttackButton = document.querySelector("#run-ecc-attack");
+const eccAttackStatus = document.querySelector("#ecc-attack-status");
+const eccAttackResults = document.querySelector("#ecc-attack-results");
+const eccAttackerPlaintext = document.querySelector("#ecc-attacker-plaintext");
+
+function clearEccAttackResults() {
+  eccAttackResults.replaceChildren();
+  eccAttackerPlaintext.textContent = "";
+  eccAttackStatus.textContent = "";
+}
+
+// Questa funzione riceve soltanto informazioni pubbliche.
+async function recoverRestrictedEccKey(
+  publicKey,
+  maximumPrivateKey,
+  reportProgress
+) {
+  for (let candidate = 1; candidate <= maximumPrivateKey; candidate++) {
+    const candidateHex = scalarToHex(candidate);
+
+    const candidatePublicKey =
+      new ethers.SigningKey(candidateHex).compressedPublicKey;
+
+    if (candidatePublicKey === publicKey) {
+      return {
+        privateScalar: candidate,
+        attempts: candidate
+      };
+    }
+
+    if (candidate % 25 === 0) {
+      reportProgress(candidate);
+
+      // Lascia aggiornare la pagina durante la ricerca.
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  }
+
+  return null;
+}
+
+async function runRestrictedEccAttack() {
+  clearEccAttackResults();
+
+  if (!eccPublicExperiment) {
+    eccAttackStatus.textContent =
+      "Run the ECC encryption experiment first.";
+    return;
+  }
+
+  // Copia dello scenario pubblico da attaccare.
+  const target = {
+    publicKey: eccPublicExperiment.publicKey,
+    maximumPrivateKey: eccPublicExperiment.maximumPrivateKey,
+    packet: { ...eccPublicExperiment.packet }
+  };
+
+  const controls = [
+    eccAttackButton,
+    eccButton,
+    eccPrivateInput,
+    messageInput
+  ];
+
+  controls.forEach(control => {
+    control.disabled = true;
+  });
+
+  try {
+    eccAttackStatus.textContent = "Searching candidate private keys…";
+
+    const start = performance.now();
+
+    const recovered = await recoverRestrictedEccKey(
+      target.publicKey,
+      target.maximumPrivateKey,
+      attempts => {
+        eccAttackStatus.textContent =
+          `Tested ${attempts}/${target.maximumPrivateKey} candidates…`;
+      }
+    );
+
+    const searchMilliseconds = performance.now() - start;
+
+    if (recovered === null) {
+      eccAttackStatus.textContent =
+        "No matching private key was found in the specified interval.";
+      return;
+    }
+
+    // La decifratura usa la chiave trovata, non il campo della pagina.
+    const plaintext = await decryptEccMessage(
+      scalarToHex(recovered.privateScalar),
+      target.packet
+    );
+
+    appendTextRow(eccAttackResults, [
+      "Search interval",
+      `1–${target.maximumPrivateKey}`
+    ]);
+
+    appendTextRow(eccAttackResults, [
+      "Recovered private key",
+      recovered.privateScalar
+    ]);
+
+    appendTextRow(eccAttackResults, [
+      "Candidates tested",
+      recovered.attempts
+    ]);
+
+    appendTextRow(eccAttackResults, [
+      "Search elapsed time",
+      `${searchMilliseconds.toFixed(1)} ms`
+    ]);
+
+    appendTextRow(eccAttackResults, [
+      "Authentication tag",
+      "Verified during decryption"
+    ]);
+
+    eccAttackerPlaintext.textContent = plaintext;
+
+    eccAttackStatus.textContent =
+      "Attack successful: the public key matched a candidate, " +
+      "and the recovered key decrypted the message.";
+  } catch (error) {
+    eccAttackStatus.textContent = `Attack failed: ${error.message}`;
+  } finally {
+    controls.forEach(control => {
+      control.disabled = false;
+    });
+  }
+}
+
+eccAttackButton.addEventListener("click", runRestrictedEccAttack);
+
+// Cancella i risultati quando cambia lo scenario.
+eccPrivateInput.addEventListener("input", clearEccAttackResults);
+messageInput.addEventListener("input", clearEccAttackResults);
+eccButton.addEventListener("click", clearEccAttackResults);
