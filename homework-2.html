@@ -138,6 +138,176 @@
             Language statistics can help identify the most plausible one.
           </p>
         </section>
+        <section class="curve-panel" aria-labelledby="attack-title">
+          <h2 id="attack-title">2. Statistical attack against Caesar</h2>
+        
+          <p>
+            We estimate English letter frequencies from a reference
+            corpus. For each of the 26 candidate shifts, we decrypt
+            the ciphertext and compute a chi-squared score.
+            The lowest-scoring candidate is selected.
+          </p>
+        
+          <p>
+            Score = Σ (observed − expected)² / expected,
+            where expected = message letter count × reference frequency.
+            This is a ranking score, not a probability of correctness.
+          </p>
+        
+          <h3>Reference corpus</h3>
+        
+          <p class="desc">
+            Paste at least 10,000 English letters from a substantial
+            text. Only A–Z letters are counted.
+            Record its title, author and source.
+          </p>
+        
+          <label for="reference-source">Reference source</label>
+          <input
+            id="reference-source"
+            class="corpus-source"
+            type="text"
+            placeholder="Title, author and URL or other source"
+          >
+        
+          <label for="reference-corpus">Reference text</label>
+          <textarea
+            id="reference-corpus"
+            class="corpus-input"
+            rows="7"
+            maxlength="2000000"
+            spellcheck="false"
+          ></textarea>
+        
+          <h3>Separate evaluation text</h3>
+        
+          <p class="desc">
+            Paste at least 2,500 English letters from a different text,
+            preferably by another author. Do not reuse the reference
+            passage. This text is used only for evaluation.
+          </p>
+        
+          <label for="evaluation-source">Evaluation source</label>
+          <input
+            id="evaluation-source"
+            class="corpus-source"
+            type="text"
+            placeholder="Title, author and URL or other source"
+          >
+        
+          <label for="evaluation-corpus">Evaluation text</label>
+          <textarea
+            id="evaluation-corpus"
+            class="corpus-input"
+            rows="7"
+            maxlength="2000000"
+            spellcheck="false"
+          ></textarea>
+        
+          <div class="experiment-controls">
+            <button id="train-caesar-model" type="button">
+              Build frequency model
+            </button>
+        
+            <button id="attack-current-caesar" type="button" disabled>
+              Attack current ciphertext
+            </button>
+        
+            <button id="evaluate-caesar-attack" type="button" disabled>
+              Test different lengths
+            </button>
+          </div>
+        
+          <p id="attack-status" role="status" aria-live="polite"></p>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Estimated reference probabilities</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Letter</th>
+                  <th scope="col">Count</th>
+                  <th scope="col">Estimated probability</th>
+                </tr>
+              </thead>
+              <tbody id="reference-frequencies"></tbody>
+            </table>
+          </div>
+        
+          <h3>Attack on the current ciphertext</h3>
+        
+          <p id="caesar-attack-summary"></p>
+          <pre id="caesar-attack-plaintext" class="hash-example"></pre>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Five best candidate shifts</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Shift</th>
+                  <th scope="col">Score — lower is better</th>
+                  <th scope="col">Plaintext preview</th>
+                </tr>
+              </thead>
+              <tbody id="caesar-candidates"></tbody>
+            </table>
+          </div>
+        
+          <h3>Recovery success by message length</h3>
+        
+          <p class="desc">
+            For each length, 100 random contiguous extracts are taken
+            from the evaluation text after removing nonletters.
+            Each extract is encrypted with a uniformly selected shift.
+            Extracts may overlap, so trials are not independent samples
+            of English as a whole.
+          </p>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Evaluation results</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Letters</th>
+                  <th scope="col">Correct keys</th>
+                  <th scope="col">Success rate</th>
+                </tr>
+              </thead>
+              <tbody id="caesar-evaluation-results"></tbody>
+            </table>
+          </div>
+        
+          <h3>Method and limitations</h3>
+        
+          <ul>
+            <li>
+              Add-one smoothing gives every letter a nonzero reference
+              probability: pᵢ = (countᵢ + 1) / (total letters + 26).
+            </li>
+            <li>
+              Short messages may have frequencies unlike typical English.
+              The best-scoring candidate is therefore not always correct.
+            </li>
+            <li>
+              A corpus from another language, genre or domain may produce
+              a less suitable model.
+            </li>
+            <li>
+              The score uses individual-letter counts and ignores letter
+              order. N-gram scoring could also use common letter sequences.
+            </li>
+            <li>
+              All 26 shifts are examined. Exhaustive search generates the
+              candidates; the statistical model ranks them automatically.
+              Exact score ties are resolved by selecting the smallest shift.
+            </li>
+            <li>
+              A low score is not a proof of correct decryption. We do not
+              interpret it as a p-value, especially for short messages
+              with small expected letter counts.
+            </li>
+          </ul>
+        </section>
       </main>
       <footer>
         <span>
