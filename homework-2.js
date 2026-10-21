@@ -415,3 +415,246 @@ for (const field of [evaluationInput, evaluationSource]) {
 messageInput.addEventListener("input", clearCurrentAttack);
 shiftInput.addEventListener("input", clearCurrentAttack);
 caesarButton.addEventListener("click", clearCurrentAttack);
+
+// ---------- Hybrid encryption: secp256k1 + HKDF + AES-GCM ----------
+
+const eccPrivateInput = document.querySelector("#ecc-private-key");
+const eccButton = document.querySelector("#run-ecc");
+const eccStatus = document.querySelector("#ecc-status");
+const eccPlaintextBox = document.querySelector("#ecc-plaintext");
+const eccPublicBox = document.querySelector("#ecc-public-key");
+const eccPackageBox = document.querySelector("#ecc-package");
+const eccDecryptedBox = document.querySelector("#ecc-decrypted");
+
+// Ordine del punto base di secp256k1, non il modulo del campo.
+const SECP256K1_ORDER =
+  0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n;
+
+const ECC_MAX_PRIVATE = 1000;
+const ECC_CONTEXT = "statistics-homework2-ecdh-hkdf-aesgcm-v1";
+
+// Conterrà solo dati pubblici utili al successivo attacco.
+let eccPublicExperiment = null;
+
+// Converte uno scalare in una rappresentazione esadecimale di 32 byte.
+function scalarToHex(scalar) {
+  return ethers.toBeHex(BigInt(scalar), 32);
+}
+
+// Estrae uno scalare nell'intero intervallo valido, senza bias da modulo.
+function randomFullScalar() {
+  while (true) {
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    const scalar = BigInt(ethers.hexlify(bytes));
+
+    if (scalar > 0n && scalar < SECP256K1_ORDER) {
+      return scalarToHex(scalar);
+    }
+  }
+}
+
+// Deriva una chiave AES dalla coordinata x del punto ECDH condiviso.
+async function deriveEccAesKey(
+  privateKeyHex,
+  peerPublicKey,
+  saltHex,
+  recipientPublicKey,
+  ephemeralPublicKey
+) {
+  const localKey = new ethers.SigningKey(privateKeyHex);
+
+  // ethers restituisce il punto condiviso non compresso: 04 || x || y.
+  const sharedPoint = localKey.computeSharedSecret(peerPublicKey);
+  const sharedX = ethers.getBytes(
+    ethers.dataSlice(sharedPoint, 1, 33)
+  );
+
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    sharedX,
+    "HKDF",
+    false,
+    ["deriveKey"]
+  );
+
+  // Associa la derivazione a questo esperimento e alle due chiavi pubbliche.
+  const info = ethers.getBytes(
+    ethers.concat([
+      ethers.toUtf8Bytes(ECC_CONTEXT),
+      recipientPublicKey,
+      ephemeralPublicKey
+    ])
+  );
+
+  return crypto.subtle.deriveKey(
+    {
+      name: "HKDF",
+      hash: "SHA-256",
+      salt: ethers.getBytes(saltHex),
+      info
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
+}
+
+// Il mittente riceve soltanto il messaggio e la chiave PUBBLICA.
+async function encryptEccMessage(plaintext, recipientPublicKey) {
+  const ephemeralPrivateKey = randomFullScalar();
+  const ephemeralKey = new ethers.SigningKey(ephemeralPrivateKey);
+
+  const ephemeralPublicKey = ephemeralKey.compressedPublicKey;
+  const salt = ethers.hexlify(
+    crypto.getRandomValues(new Uint8Array(32))
+  );
+  const iv = ethers.hexlify(
+    crypto.getRandomValues(new Uint8Array(12))
+  );
+
+  const aesKey = await deriveEccAesKey(
+    ephemeralPrivateKey,
+    recipientPublicKey,
+    salt,
+    recipientPublicKey,
+    ephemeralPublicKey
+  );
+
+  const encrypted = await crypto.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv: ethers.getBytes(iv),
+      additionalData: ethers.toUtf8Bytes(ECC_CONTEXT),
+      tagLength: 128
+    },
+    aesKey,
+    ethers.toUtf8Bytes(plaintext)
+  );
+
+  // Web Crypto restituisce il testo cifrato seguito dal tag.
+  return {
+    ephemeralPublicKey,
+    salt,
+    iv,
+    ciphertextAndTag: ethers.hexlify(new Uint8Array(encrypted))
+  };
+}
+
+// Il destinatario usa la propria chiave PRIVATA e il pacchetto ricevuto.
+async function decryptEccMessage(privateKeyHex, packet) {
+  const recipientKey = new ethers.SigningKey(privateKeyHex);
+  const recipientPublicKey = recipientKey.compressedPublicKey;
+
+  const aesKey = await deriveEccAesKey(
+    privateKeyHex,
+    packet.ephemeralPublicKey,
+    packet.salt,
+    recipientPublicKey,
+    packet.ephemeralPublicKey
+  );
+
+  const decrypted = await crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv: ethers.getBytes(packet.iv),
+      additionalData: ethers.toUtf8Bytes(ECC_CONTEXT),
+      tagLength: 128
+    },
+    aesKey,
+    ethers.getBytes(packet.ciphertextAndTag)
+  );
+
+  return new TextDecoder("utf-8", { fatal: true }).decode(decrypted);
+}
+
+function clearEccResults() {
+  eccPublicExperiment = null;
+
+  eccPlaintextBox.textContent = "";
+  eccPublicBox.textContent = "";
+  eccPackageBox.textContent = "";
+  eccDecryptedBox.textContent = "";
+
+  eccStatus.textContent =
+    "Inputs changed. Run the ECC experiment again.";
+}
+
+async function runEccExperiment() {
+  clearEccResults();
+
+  if (!window.ethers || !window.crypto?.subtle) {
+    eccStatus.textContent =
+      "This experiment needs ethers.js and Web Crypto. " +
+      "Open the HTTPS site and check that the library loaded.";
+    return;
+  }
+
+  const controls = [eccButton, eccPrivateInput, messageInput];
+
+  controls.forEach(control => {
+    control.disabled = true;
+  });
+
+  try {
+    const plaintext = normalizeMessage(messageInput.value);
+    const privateScalar = eccPrivateInput.valueAsNumber;
+
+    if (
+      !Number.isInteger(privateScalar) ||
+      privateScalar < 1 ||
+      privateScalar > ECC_MAX_PRIVATE
+    ) {
+      throw new Error("Choose an integer private key between 1 and 1000.");
+    }
+
+    // Aggiorna anche Cesare usando lo stesso messaggio normalizzato.
+    runCaesarExperiment();
+    clearCurrentAttack();
+
+    eccStatus.textContent = "Encrypting and decrypting…";
+
+    const privateKeyHex = scalarToHex(privateScalar);
+    const recipientKey = new ethers.SigningKey(privateKeyHex);
+    const recipientPublicKey = recipientKey.compressedPublicKey;
+
+    const packet = await encryptEccMessage(
+      plaintext,
+      recipientPublicKey
+    );
+
+    const decrypted = await decryptEccMessage(
+      privateKeyHex,
+      packet
+    );
+
+    if (decrypted !== plaintext) {
+      throw new Error("The decrypted message does not match.");
+    }
+
+    eccPublicExperiment = {
+      publicKey: recipientPublicKey,
+      packet,
+      maximumPrivateKey: ECC_MAX_PRIVATE
+    };
+
+    eccPlaintextBox.textContent = plaintext;
+    eccPublicBox.textContent = recipientPublicKey;
+    eccPackageBox.textContent = JSON.stringify(packet, null, 2);
+    eccDecryptedBox.textContent = decrypted;
+
+    eccStatus.textContent =
+      "Success: decryption matches the normalized plaintext " +
+      "and the authentication tag was verified.";
+  } catch (error) {
+    eccStatus.textContent = `ECC experiment failed: ${error.message}`;
+  } finally {
+    controls.forEach(control => {
+      control.disabled = false;
+    });
+  }
+}
+
+eccButton.addEventListener("click", runEccExperiment);
+eccPrivateInput.addEventListener("input", clearEccResults);
+messageInput.addEventListener("input", clearEccResults);
