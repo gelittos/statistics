@@ -307,3 +307,30 @@ body,h1,h1 span,h2,h3 {
   outline: 3px solid #b25130;
   outline-offset: 3px;
 }
+.corpus-input,
+.corpus-source {
+  display: block;
+  width: 100%;
+  margin: 10px 0 20px;
+  padding: 12px;
+  border: 1px solid #566b71;
+  border-radius: 6px;
+  background: #fff;
+  color: #192d36;
+  font: inherit;
+}
+
+.corpus-input {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.corpus-input:focus-visible,
+.corpus-source:focus-visible {
+  outline: 3px solid #b25130;
+  outline-offset: 3px;
+}
+
+#caesar-candidates td:last-child {
+  overflow-wrap: anywhere;
+}
