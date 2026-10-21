@@ -332,6 +332,84 @@
             </li>
           </ul>
         </section>
+        <section class="curve-panel" aria-labelledby="ecc-title">
+          <h2 id="ecc-title">3. Hybrid encryption with secp256k1</h2>
+        
+          <p>
+            We use the same normalized message as the Caesar experiment.
+            The recipient has a private scalar k and a public key Q = kG.
+            For this experiment, k is deliberately restricted to 1,…,1000.
+          </p>
+        
+          <ol>
+            <li>
+              The sender generates a fresh ephemeral scalar r from the
+              full valid secp256k1 scalar range and computes R = rG.
+            </li>
+            <li>
+              The sender computes the shared point S = rQ.
+              The recipient obtains the same point as S = kR.
+            </li>
+            <li>
+              HKDF-SHA256 derives an AES-256 key from the shared
+              point's x coordinate, a random salt and context information.
+            </li>
+            <li>
+              AES-GCM encrypts the message using a fresh 12-byte IV
+              and produces a 16-byte authentication tag.
+            </li>
+            <li>
+              The recipient derives the same AES key and decrypts,
+              verifying the authentication tag.
+            </li>
+          </ol>
+        
+          <div class="experiment-controls">
+            <label for="ecc-private-key">Recipient private key k</label>
+        
+            <input
+              id="ecc-private-key"
+              type="number"
+              min="1"
+              max="1000"
+              step="1"
+              value="137"
+            >
+        
+            <button id="run-ecc" type="button">
+              Encrypt and decrypt
+            </button>
+          </div>
+        
+          <p id="ecc-status" role="status" aria-live="polite"></p>
+        
+          <h3>Normalized plaintext</h3>
+          <pre id="ecc-plaintext" class="hash-example"></pre>
+        
+          <h3>Recipient public key Q</h3>
+          <pre id="ecc-public-key" class="hash-example"></pre>
+        
+          <h3>Public transmission package</h3>
+          <pre id="ecc-package" class="hash-example"></pre>
+        
+          <h3>Decrypted message</h3>
+          <pre id="ecc-decrypted" class="hash-example"></pre>
+        
+          <p class="desc">
+            The package contains the ephemeral public key R, salt,
+            IV and ciphertext with its authentication tag.
+            The private scalars and shared secret are not transmitted.
+            Public keys are displayed in compressed hexadecimal encoding.
+          </p>
+        
+          <p class="notice">
+            This is a teaching construction, not Ethereum transaction
+            encryption or a production-ready protocol.
+            The small recipient key space makes it deliberately insecure.
+            We assume the recipient public key is authentic.
+            The GCM tag does not establish the sender's identity.
+          </p>
+        </section>
       </main>
       <footer>
         <span>
