@@ -289,3 +289,21 @@ body,h1,h1 span,h2,h3 {
   font-size: 13px;
   line-height: 1.7;
 }
+#message-input {
+  display: block;
+  width: 100%;
+  margin: 12px 0;
+  padding: 14px;
+  border: 1px solid #566b71;
+  border-radius: 6px;
+  background: #fff;
+  color: #192d36;
+  font: inherit;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+#message-input:focus-visible {
+  outline: 3px solid #b25130;
+  outline-offset: 3px;
+}
