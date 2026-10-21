@@ -458,6 +458,238 @@
             for a recipient private key selected from only 1000 possibilities.
           </p>
         </section>
+        <section class="curve-panel" aria-labelledby="comparison-title">
+          <h2 id="comparison-title">5. Comparison and conclusions</h2>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Caesar cipher and the educational ECC scheme</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Aspect</th>
+                  <th scope="col">Caesar cipher</th>
+                  <th scope="col">ECC-based hybrid scheme</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Keys</th>
+                  <td>
+                    The same secret shift is used for encryption and decryption.
+                  </td>
+                  <td>
+                    The sender uses the recipient's public key.
+                    The recipient uses the corresponding private key.
+                    A fresh ephemeral key pair is generated for each encryption.
+                  </td>
+                </tr>
+        
+                <tr>
+                  <th scope="row">Encryption</th>
+                  <td>
+                    Each letter is moved by a fixed number of positions
+                    in the alphabet.
+                  </td>
+                  <td>
+                    ECDH establishes a shared secret.
+                    HKDF derives an AES key, and AES-GCM encrypts the message.
+                  </td>
+                </tr>
+        
+                <tr>
+                  <th scope="row">Decryption</th>
+                  <td>
+                    Each letter is moved backwards by the same shift.
+                  </td>
+                  <td>
+                    The recipient reconstructs the shared secret and AES key,
+                    then decrypts the message and verifies the authentication tag.
+                  </td>
+                </tr>
+        
+                <tr>
+                  <th scope="row">Key space in this experiment</th>
+                  <td>
+                    26 shifts, including shift 0, which leaves the text unchanged.
+                  </td>
+                  <td>
+                    1,000 possible recipient private keys.
+                    This deliberate restriction makes key recovery practical.
+                  </td>
+                </tr>
+        
+                <tr>
+                  <th scope="row">Repeated encryption</th>
+                  <td>
+                    The same message and shift always produce the same ciphertext.
+                  </td>
+                  <td>
+                    Fresh random values make repeated encryptions of the same
+                    message produce different encrypted packages.
+                  </td>
+                </tr>
+        
+                <tr>
+                  <th scope="row">Statistical properties</th>
+                  <td>
+                    Letter frequencies are preserved under a shifted alphabet.
+                    Repeated letters and language patterns remain visible.
+                    This implementation also preserves spaces and punctuation.
+                  </td>
+                  <td>
+                    The encrypted bytes do not preserve the plaintext's letter
+                    frequencies in the same way. However, message length
+                    is still revealed.
+                  </td>
+                </tr>
+        
+                <tr>
+                  <th scope="row">Attack implemented</th>
+                  <td>
+                    Rank all shifts by comparing the decrypted letter counts
+                    with a reference language model.
+                  </td>
+                  <td>
+                    Test candidate private keys until the calculated public key
+                    matches the recipient's public key, then decrypt.
+                  </td>
+                </tr>
+        
+                <tr>
+                  <th scope="row">How a candidate is identified</th>
+                  <td>
+                    A statistical score estimates which plaintext is most likely.
+                    The best candidate can be wrong.
+                  </td>
+                  <td>
+                    The public-key comparison gives an exact match within
+                    the tested interval.
+                  </td>
+                </tr>
+        
+                <tr>
+                  <th scope="row">Effect of message length</th>
+                  <td>
+                    Longer representative texts usually give more reliable
+                    letter-frequency estimates.
+                  </td>
+                  <td>
+                    Key recovery depends on the private-key search interval,
+                    not on the language or length of the encrypted message.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        
+          <h3>What the Caesar experiment shows</h3>
+        
+          <p>
+            In the recorded run, the statistical attack recovered the correct
+            shift in 92 out of 100 trials for messages of 20 letters.
+            It succeeded in all 100 trials at each tested length of
+            50, 100, 200 and 500 letters.
+            These results describe this experiment, rather than a guarantee
+            for every English text.
+          </p>
+        
+          <p>
+            Short messages can have letter frequencies that differ greatly
+            from the reference corpus. Names, unusual vocabulary and texts
+            from another language can also reduce accuracy.
+            Longer texts usually provide more stable frequency estimates.
+            However, the sampled excerpts may overlap, so the trials should
+            not be treated as fully independent observations.
+          </p>
+        
+          <p>
+            The attack combines exhaustive search and statistical analysis:
+            it tests all 26 shifts and uses a chi-squared score to rank them.
+            Exhaustive search alone lists the possibilities; the language
+            model helps choose between them.
+            An optional improvement would be to score common pairs or groups
+            of letters, using bigrams or trigrams.
+          </p>
+        
+          <h3>Why the restricted ECC key can be recovered</h3>
+        
+          <p>
+            The attacker knows the recipient's public key Q and the base point G.
+            For each candidate d from 1 to 1,000, the attacker computes dG
+            and compares it with Q.
+            A match reveals the private key, which can then be used to
+            reconstruct the shared secret and decrypt the message.
+            No language model or known plaintext is required.
+          </p>
+        
+          <p>
+            This ascending search needs at most 1,000 candidate tests.
+            If the private key were selected uniformly from this interval,
+            the average would be 500.5 tests.
+            In this implementation, a private key of 137 is found after
+            exactly 137 candidate tests.
+            Measured running times also depend on the device, browser
+            and pauses used to keep the interface responsive.
+          </p>
+        
+          <p>
+            A set of 1,000 equally likely private keys provides only about
+            log2(1,000) = 9.97 bits of uncertainty.
+            Using AES-256 does not remove this weakness:
+            recovering the recipient's private key allows the attacker
+            to derive the AES key without attacking AES itself.
+          </p>
+        
+          <h3>Why a full-size ECC key changes the problem</h3>
+        
+          <p>
+            A properly generated secp256k1 private key is selected from
+            1 to n − 1, where n is the order of the base point and is
+            approximately 2<sup>256</sup>.
+            Searching this entire space by trying every private key
+            is not practical.
+          </p>
+        
+          <p>
+            The best general classical discrete-logarithm attacks require
+            roughly 2<sup>128</sup> group operations, rather than
+            2<sup>256</sup>. This is still beyond practical reach.
+            Therefore, a 256-bit elliptic-curve key is commonly associated
+            with approximately 128-bit classical security.
+          </p>
+        
+          <p>
+            If a key is known to lie in a small interval, methods such as
+            baby-step giant-step or Pollard's kangaroo can reduce the
+            search work to roughly the square root of the interval size,
+            with different memory requirements.
+            They are optional alternatives to the simple search implemented here.
+          </p>
+        
+          <h3>Limitations of the educational scheme</h3>
+        
+          <p>
+            The deliberately small recipient private-key space is the
+            weakness exploited by this attack. A fresh, full-size ephemeral
+            key does not compensate for a weak recipient private key.
+          </p>
+        
+          <p>
+            The scheme also assumes that the sender has obtained the authentic
+            recipient public key. AES-GCM detects changes to the encrypted
+            message under the derived key, but it does not prove the sender's
+            identity: anyone with the recipient's public key can create a
+            new encrypted message.
+          </p>
+        
+          <p>
+            Random-looking ciphertext and successful statistical tests
+            are not proofs of security. Security also depends on key generation,
+            correct implementation and the surrounding protocol.
+            This is an educational hybrid encryption demonstration,
+            not the Ethereum transaction protocol.
+          </p>
+        </section>
       </main>
       <footer>
         <span>
