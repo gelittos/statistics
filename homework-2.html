@@ -410,6 +410,54 @@
             The GCM tag does not establish the sender's identity.
           </p>
         </section>
+        <section class="curve-panel" aria-labelledby="ecc-attack-title">
+          <h2 id="ecc-attack-title">4. Attack on the restricted ECC key space</h2>
+        
+          <p>
+            The attacker receives the recipient public key, the public
+            encryption package and the known private-key bound.
+            The original private key and plaintext are not inputs
+            to the attack.
+          </p>
+        
+          <p>
+            For each candidate d from 1 to 1000, the attacker computes
+            dG and compares it with the recipient public key Q.
+            Once a match is found, the recovered private key is used
+            to derive the AES key and decrypt the message.
+          </p>
+        
+          <div class="experiment-controls">
+            <button id="run-ecc-attack" type="button">
+              Recover key and decrypt
+            </button>
+          </div>
+        
+          <p id="ecc-attack-status" role="status" aria-live="polite"></p>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Exhaustive-search results</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Measurement</th>
+                  <th scope="col">Result</th>
+                </tr>
+              </thead>
+              <tbody id="ecc-attack-results"></tbody>
+            </table>
+          </div>
+        
+          <h3>Message recovered by the attacker</h3>
+          <pre id="ecc-attacker-plaintext" class="hash-example"></pre>
+        
+          <p class="notice">
+            The attack succeeds because the private key belongs to a
+            small known set. It does not exploit English letter frequencies
+            or a weakness in AES-GCM. A 256-bit AES key does not compensate
+            for a recipient private key selected from only 1000 possibilities.
+          </p>
+        </section>
       </main>
       <footer>
         <span>
