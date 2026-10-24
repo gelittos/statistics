@@ -238,3 +238,240 @@ for (const input of [
 // Mostra subito una prima simulazione.
 updateModelControls();
 runSimulation();
+
+// Crea un elemento SVG, impostandone gli attributi.
+function createTrajectorySvgElement(tag, attributes, text = "") {
+  const element = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    tag
+  );
+
+  for (const [name, value] of Object.entries(attributes)) {
+    element.setAttribute(name, value);
+  }
+
+  if (text !== "") {
+    element.textContent = text;
+  }
+
+  return element;
+}
+
+// Disegna un pannello con le traiettorie e il valore atteso.
+function drawTrajectoryPanel(
+  selector,
+  data,
+  transform,
+  expectedAt,
+  fixedRange = null
+) {
+  const svg = document.querySelector(selector);
+  svg.replaceChildren();
+
+  const { n } = data.parameters;
+  const paths = data.trajectories.slice(0, 30);
+
+  const left = 74;
+  const right = 738;
+  const top = 22;
+  const bottom = 248;
+
+  let minimum = 0;
+  let maximum = 0;
+
+  // Cerca l'intervallo verticale nei dati visualizzati.
+  for (const path of paths) {
+    for (let k = 1; k <= n; k++) {
+      const value = transform(path[k], k);
+
+      minimum = Math.min(minimum, value);
+      maximum = Math.max(maximum, value);
+    }
+  }
+
+  // Include anche la curva del valore atteso.
+  for (let k = 1; k <= n; k++) {
+    minimum = Math.min(minimum, expectedAt(k));
+    maximum = Math.max(maximum, expectedAt(k));
+  }
+
+  if (fixedRange !== null) {
+    [minimum, maximum] = fixedRange;
+  } else {
+    const padding = Math.max((maximum - minimum) * 0.08, 0.5);
+
+    minimum -= padding;
+    maximum += padding;
+  }
+
+  // Converte le coordinate dei dati in coordinate SVG.
+  const x = k => n === 1
+    ? (left + right) / 2
+    : left + ((k - 1) / (n - 1)) * (right - left);
+
+  const y = value =>
+    bottom -
+    ((value - minimum) / (maximum - minimum)) * (bottom - top);
+
+  // Griglia orizzontale ed etichette dell'asse verticale.
+  for (let tick = 0; tick <= 4; tick++) {
+    const value = minimum + (maximum - minimum) * tick / 4;
+    const position = y(value);
+
+    svg.append(
+      createTrajectorySvgElement("line", {
+        x1: left,
+        y1: position,
+        x2: right,
+        y2: position,
+        class: "trajectory-grid"
+      }),
+
+      createTrajectorySvgElement("text", {
+        x: left - 10,
+        y: position + 4,
+        "text-anchor": "end",
+        class: "trajectory-label"
+      }, value.toFixed(2))
+    );
+  }
+
+  // Seleziona al massimo cinque posizioni intere sull'asse k.
+  const xTicks = [...new Set(
+    [0, 0.25, 0.5, 0.75, 1].map(
+      fraction => 1 + Math.round(fraction * (n - 1))
+    )
+  )];
+
+  for (const k of xTicks) {
+    svg.append(
+      createTrajectorySvgElement("text", {
+        x: x(k),
+        y: bottom + 22,
+        "text-anchor": "middle",
+        class: "trajectory-label"
+      }, String(k))
+    );
+  }
+
+  // Assi e titolo dell'asse orizzontale.
+  svg.append(
+    createTrajectorySvgElement("line", {
+      x1: left,
+      y1: top,
+      x2: left,
+      y2: bottom,
+      class: "trajectory-axis"
+    }),
+
+    createTrajectorySvgElement("line", {
+      x1: left,
+      y1: bottom,
+      x2: right,
+      y2: bottom,
+      class: "trajectory-axis"
+    }),
+
+    createTrajectorySvgElement("text", {
+      x: (left + right) / 2,
+      y: 291,
+      "text-anchor": "middle",
+      class: "trajectory-label"
+    }, "Systems attempted, k")
+  );
+
+  // Disegna le traiettorie dei singoli attaccanti.
+  paths.forEach((path, index) => {
+    const coordinates = [];
+
+    for (let k = 1; k <= n; k++) {
+      coordinates.push(
+        `${x(k)},${y(transform(path[k], k))}`
+      );
+    }
+
+    const color = `hsl(${index * 137.5 % 360}, 65%, 48%)`;
+
+    const line = createTrajectorySvgElement("polyline", {
+      points: coordinates.join(" "),
+      stroke: color,
+      class: "trajectory-line"
+    });
+
+    line.append(
+      createTrajectorySvgElement(
+        "title",
+        {},
+        `Attacker ${index + 1}`
+      )
+    );
+
+    svg.append(line);
+
+    // Con n = 1 una traiettoria è un solo punto.
+    if (n === 1) {
+      svg.append(
+        createTrajectorySvgElement("circle", {
+          cx: x(1),
+          cy: y(transform(path[1], 1)),
+          r: 3,
+          fill: color
+        })
+      );
+    }
+  });
+
+  // Disegna il valore atteso sopra le traiettorie.
+  const expectedCoordinates = [];
+
+  for (let k = 1; k <= n; k++) {
+    expectedCoordinates.push(`${x(k)},${y(expectedAt(k))}`);
+  }
+
+  svg.append(
+    createTrajectorySvgElement("polyline", {
+      points: expectedCoordinates.join(" "),
+      class: "trajectory-expected"
+    })
+  );
+
+  if (n === 1) {
+    svg.append(
+      createTrajectorySvgElement("circle", {
+        cx: x(1),
+        cy: y(expectedAt(1)),
+        r: 5,
+        fill: "none",
+        stroke: "currentColor",
+        "stroke-width": 2
+      })
+    );
+  }
+}
+
+// Applica le tre trasformazioni agli stessi percorsi simulati.
+function renderTrajectoryPlots(data) {
+  const { model, mu } = data.parameters;
+
+  drawTrajectoryPanel(
+    "#total-trajectories",
+    data,
+    (score, k) => score,
+    k => k * mu
+  );
+
+  drawTrajectoryPanel(
+    "#average-trajectories",
+    data,
+    (score, k) => score / k,
+    k => mu,
+    model === "bernoulli" ? [0, 1] : [-1, 1]
+  );
+
+  drawTrajectoryPanel(
+    "#normalized-trajectories",
+    data,
+    (score, k) => score / Math.sqrt(k),
+    k => Math.sqrt(k) * mu
+  );
+}
