@@ -385,6 +385,182 @@
           (Sₙ − np)/√(np(1 − p)).
         </p>
       </section>
+      <section aria-labelledby="conclusions-title">
+        <h2 id="conclusions-title">5. Recorded results and conclusions</h2>
+      
+        <p>
+          The following observations refer to two recorded runs with
+          n = 1000 systems, m = 2000 attackers and tolerance ε = 0.1.
+          The Bernoulli run used p = 0.3.
+          These recorded values remain fixed in this discussion;
+          the interactive results above change when a new simulation is run.
+        </p>
+      
+        <h3>Total scores become more dispersed</h3>
+      
+        <p>
+          In the Rademacher experiment, the empirical variance of the total
+          increased from 10.3256 at 10 systems to 1022.9588 at 1000 systems.
+          The corresponding theoretical values are 10 and 1000.
+        </p>
+      
+        <p>
+          In the Bernoulli experiment, the empirical variance increased
+          from 2.0500 to 216.0718, compared with theoretical values
+          of 2.1 and 210.
+          Both experiments support the relationship Var(Sₙ) = nσ²:
+          total scores become more dispersed as the number of systems increases.
+        </p>
+      
+        <h3>Averages concentrate: the Law of Large Numbers</h3>
+      
+        <p>
+          Dividing by n reduces the variance to σ²/n.
+          In the Rademacher experiment, the fraction of attackers with
+          |Sₙ/n| &gt; 0.1 decreased from 74.95% at 10 systems
+          to 0.20% at 1000 systems: only 4 out of 2000 attackers
+          remained outside the selected tolerance.
+        </p>
+      
+        <p>
+          In the Bernoulli experiment, the fraction with
+          |Sₙ/n − 0.3| &gt; 0.1 decreased from 29.00% at 10 systems
+          to 0.00% observed at both 500 and 1000 systems.
+          No exceedances were observed in those samples, but this does
+          not establish that the underlying probability is zero.
+        </p>
+      
+        <p>
+          These results illustrate convergence in probability:
+          for a fixed positive tolerance, the probability of a deviation
+          beyond that tolerance tends to zero as n increases.
+          A finite simulation illustrates this behavior; it does not
+          constitute a proof of the limiting theorem.
+        </p>
+      
+        <h3>A mean close to the target is not enough</h3>
+      
+        <p>
+          At 10 systems, the Rademacher empirical mean of the individual
+          averages was already −0.0080, close to the theoretical target 0.
+          Nevertheless, 74.95% of attackers were outside the tolerance.
+          Positive and negative deviations can cancel when averaged
+          across attackers.
+        </p>
+      
+        <p>
+          Therefore, concentration must be assessed using dispersion
+          and deviation probabilities, rather than only the overall mean.
+          Increasing n reduces the variability of each attacker's average;
+          increasing m improves the estimation of its distribution.
+        </p>
+      
+        <h3>Square-root normalization preserves variance</h3>
+      
+        <p>
+          For Rademacher increments, the empirical variance of Sₙ/√n
+          remained close to 1 at every checkpoint.
+          At n = 1000, its empirical mean was 0.0126 and its variance
+          was 1.0230, compared with theoretical values 0 and 1.
+        </p>
+      
+        <p>
+          The Central Limit Theorem states that Sₙ/√n converges
+          in distribution to the standard normal distribution in this model.
+          The histogram and the orange normal curve provide a visual
+          comparison. Agreement of the mean and variance alone would
+          not establish that a distribution is normal.
+        </p>
+      
+        <p>
+          This convergence concerns the distribution across repeated
+          trajectories. It does not mean that each normalized trajectory
+          converges to zero.
+        </p>
+      
+        <h3>Why Bernoulli requires centering</h3>
+      
+        <p>
+          For Bernoulli increments with p = 0.3, the variance of Sₙ/√n
+          remains 0.21, but its mean is 0.3√n.
+          At n = 1000, the observed mean was 9.4778,
+          close to the theoretical value 9.4868.
+          The observed variance was 0.2161, close to 0.21.
+        </p>
+      
+        <p>
+          Thus, constant variance does not imply convergence to a standard
+          normal distribution: the center of this distribution moves
+          to the right as n increases.
+          For fixed 0 &lt; p &lt; 1, the appropriate standardized quantity is
+          Zₙ = (Sₙ − np)/√(np(1 − p)).
+          The Central Limit Theorem applies to Zₙ.
+        </p>
+      
+        <h3>Chebyshev bounds and observed probabilities</h3>
+      
+        <p>
+          At 1000 systems, the Rademacher empirical exceedance rate
+          was 0.20%, while the Chebyshev upper bound was 10%.
+          For Bernoulli, the observed rate was 0%, while the bound
+          was 2.10%.
+        </p>
+      
+        <p>
+          Chebyshev's inequality provides an upper bound on the true
+          deviation probability, not its exact value.
+          The bound can be much larger than the observed rate.
+          It also does not impose an absolute limit on a random
+          finite-sample frequency.
+        </p>
+      
+        <h3>Interpretation: systems and attackers</h3>
+      
+        <p>
+          In the Bernoulli model, increasing n increases the expected
+          number of successful penetrations per attacker, np.
+          At the same time, the proportion of successful attempts
+          becomes more predictable and concentrates around p.
+          A stable success proportion therefore does not imply
+          a small total number of penetrations.
+        </p>
+      
+        <p>
+          Across all m independent attackers, the aggregate Bernoulli
+          score has mean mnp and variance mnp(1 − p).
+          With the recorded parameters, these are 600000 and 420000.
+          The aggregate counts successful attacker-system attempts:
+          it does not count distinct compromised systems, since several
+          attackers may succeed against the same system.
+        </p>
+      
+        <p>
+          In the Rademacher model, the aggregate score has mean 0
+          and variance mn, equal to 2000000 here.
+          Positive and negative scores can cancel.
+          A small net score should therefore not be interpreted
+          as evidence that few successful events occurred.
+        </p>
+      
+        <h3>Limits of the experiment</h3>
+      
+        <p>
+          The model assumes independent increments with an unchanged
+          distribution, and independence between attackers.
+          Real attacks may involve shared vulnerabilities, different
+          attacker capabilities, learning or defensive changes.
+          These effects are not represented.
+        </p>
+      
+        <p>
+          Empirical estimates fluctuate between runs, and checkpoints
+          share the same trajectories.
+          Histogram appearance also depends on the number of attackers,
+          the chosen intervals and the automatic axis scales.
+          The observations support the theoretical predictions within
+          this simplified model.
+        </p>
+      </section>
     </main>
 
     <footer>
