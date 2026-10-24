@@ -293,6 +293,72 @@
           provides a useful approximation.
         </p>
       </section>
+      <section aria-labelledby="convergence-title">
+        <h2 id="convergence-title">Convergence as the system size increases</h2>
+      
+        <p>
+          We observe the same simulated attackers at different checkpoints.
+          Set n = 1000 to include all standard checkpoints:
+          10, 50, 100, 500 and 1000 systems.
+          Only checkpoints up to the selected n are included.
+        </p>
+      
+        <p id="convergence-description" class="desc"></p>
+      
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Variance under different normalizations</caption>
+      
+            <thead>
+              <tr>
+                <th scope="col">Systems</th>
+                <th scope="col">Var(Sₖ): empirical</th>
+                <th scope="col">Var(Sₖ): theoretical</th>
+                <th scope="col">Var(Sₖ/k): empirical</th>
+                <th scope="col">Var(Sₖ/k): theoretical</th>
+                <th scope="col">Var(Sₖ/√k): empirical</th>
+                <th scope="col">Var(Sₖ/√k): theoretical</th>
+              </tr>
+            </thead>
+      
+            <tbody id="variance-comparison"></tbody>
+          </table>
+        </div>
+      
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Law of Large Numbers: concentration around μ</caption>
+      
+            <thead>
+              <tr>
+                <th scope="col">Systems</th>
+                <th scope="col">Empirical mean of Sₖ/k</th>
+                <th scope="col">Target μ</th>
+                <th scope="col">Outside tolerance</th>
+                <th scope="col">Empirical probability</th>
+                <th scope="col">Chebyshev upper bound</th>
+              </tr>
+            </thead>
+      
+            <tbody id="lln-comparison"></tbody>
+          </table>
+        </div>
+      
+        <p>
+          The empirical probability is the fraction of attackers for whom
+          |Sₖ/k − μ| &gt; ε.
+          Chebyshev's inequality gives the theoretical upper bound
+          min(1, σ²/(kε²)) for this probability.
+          The bound is not a prediction of the exact probability.
+        </p>
+      
+        <p class="desc">
+          Rows share the same trajectories and are therefore dependent.
+          Finite-sample estimates can fluctuate and need not decrease
+          at every checkpoint. An observed rate of 0% does not establish
+          that the true probability is zero.
+        </p>
+      </section>
 
       <section aria-labelledby="interpretation-title">
         <h2 id="interpretation-title">4. What to look for</h2>
