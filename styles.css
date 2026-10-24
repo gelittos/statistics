@@ -384,3 +384,18 @@ body,h1,h1 span,h2,h3 {
   stroke-width: 2.5;
   stroke-dasharray: 7 5;
 }
+
+/* Homework 3: final-score distributions */
+
+.histogram-bar {
+  fill: #397ec0;
+  fill-opacity: 0.7;
+  stroke: #245b85;
+  stroke-width: 0.5;
+}
+
+.histogram-normal {
+  fill: none;
+  stroke: #e87924;
+  stroke-width: 3;
+}
