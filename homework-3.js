@@ -159,7 +159,7 @@ function displaySimulation(data) {
   );
 
   const outsideTolerance = averages.filter(
-    value => Math.abs(value - mu) > epsilon
+    value => exceedsTolerance(value, mu, epsilon)
   ).length;
 
   const outsidePercentage = 100 * outsideTolerance / m;
@@ -189,19 +189,20 @@ function invalidateSimulation() {
     "#normalized-trajectories"
   ]) {
   document.querySelector(selector).replaceChildren();
-}
-
+  }
   simulationStatus.textContent =
     "Parameters changed. Run the simulation again.";
   for (const selector of [
   "#total-histogram",
   "#average-histogram",
   "#normalized-histogram"
-]) {
+  ]) {
   document.querySelector(selector).replaceChildren();
-}
-
-document.querySelector("#histogram-explanation").textContent = "";
+  }
+  document.querySelector("#histogram-explanation").textContent = "";
+  document.querySelector("#variance-comparison").replaceChildren();
+  document.querySelector("#lln-comparison").replaceChildren();
+  document.querySelector("#convergence-description").textContent = "";
 }
 
 // Aggiorna il controllo di p quando si cambia modello.
@@ -228,6 +229,7 @@ function runSimulation() {
     displaySimulation(simulationData);
     renderTrajectoryPlots(simulationData);
     renderScoreHistograms(simulationData);
+    renderConvergenceComparison(simulationData);
     simulationStatus.textContent =
       `Completed: ${parameters.m} attackers, ` +
       `${parameters.n} systems, ${parameters.model} model.`;
@@ -737,4 +739,90 @@ function renderScoreHistograms(data) {
         "so it does not converge to N(0,1) for fixed p > 0. " +
         "For 0 < p < 1, the CLT instead applies to " +
         "(Sₙ − np)/√(np(1 − p)).";
+}
+
+// Verifica se uno scostamento supera la tolleranza.
+// Il piccolo margine evita falsi superamenti dovuti
+// alla rappresentazione numerica dei decimali.
+function exceedsTolerance(value, target, epsilon) {
+  return Math.abs(value - target) > epsilon + 1e-12;
+}
+
+// Aggiunge una riga di testo a una tabella.
+function appendComparisonRow(tableBody, values) {
+  const row = document.createElement("tr");
+
+  for (const value of values) {
+    const cell = document.createElement("td");
+    cell.textContent = String(value);
+    row.appendChild(cell);
+  }
+
+  tableBody.appendChild(row);
+}
+
+// Confronta le statistiche a diversi punti delle stesse traiettorie.
+function renderConvergenceComparison(data) {
+  const { n, m, mu, variance, epsilon } = data.parameters;
+
+  const varianceTable = document.querySelector("#variance-comparison");
+  const llnTable = document.querySelector("#lln-comparison");
+  const description = document.querySelector("#convergence-description");
+
+  varianceTable.replaceChildren();
+  llnTable.replaceChildren();
+
+  // Include i checkpoint standard disponibili e il valore finale n.
+  const checkpoints = [...new Set([
+    ...[10, 50, 100, 500, 1000].filter(k => k <= n),
+    n
+  ])].sort((a, b) => a - b);
+
+  for (const k of checkpoints) {
+    // Legge il punteggio di ogni attaccante dopo k sistemi.
+    const scores = data.trajectories.map(path => path[k]);
+
+    const averages = scores.map(score => score / k);
+    const normalized = scores.map(score => score / Math.sqrt(k));
+
+    const totalMoments = empiricalMoments(scores);
+    const averageMoments = empiricalMoments(averages);
+    const normalizedMoments = empiricalMoments(normalized);
+
+    appendComparisonRow(varianceTable, [
+      k,
+      formatNumber(totalMoments.variance),
+      formatNumber(k * variance),
+      formatNumber(averageMoments.variance),
+      formatNumber(variance / k),
+      formatNumber(normalizedMoments.variance),
+      formatNumber(variance)
+    ]);
+
+    const outsideCount = averages.filter(
+      value => exceedsTolerance(value, mu, epsilon)
+    ).length;
+
+    const empiricalProbability = outsideCount / m;
+
+    const chebyshevBound = Math.min(
+      1,
+      variance / (k * epsilon ** 2)
+    );
+
+    appendComparisonRow(llnTable, [
+      k,
+      formatNumber(averageMoments.mean),
+      formatNumber(mu),
+      `${outsideCount}/${m}`,
+      `${(100 * empiricalProbability).toFixed(2)}%`,
+      `${(100 * chebyshevBound).toFixed(2)}%`
+    ]);
+  }
+
+  description.textContent =
+    `Model: ${data.parameters.model}; attackers: ${m}; ` +
+    `increment mean μ = ${formatNumber(mu)}; ` +
+    `increment variance σ² = ${formatNumber(variance)}; ` +
+    `tolerance ε = ${epsilon}.`;
 }
