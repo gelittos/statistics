@@ -144,6 +144,64 @@
 
         <p id="simulation-status" role="status" aria-live="polite"></p>
       </section>
+      <section aria-labelledby="trajectories-title">
+        <h2 id="trajectories-title">Sample trajectories</h2>
+      
+        <p>
+          Each line represents one attacker. The horizontal axis shows
+          the number of systems attempted so far, k.
+          For readability, only the first 30 attackers are displayed.
+          All attackers are still included in the numerical results.
+        </p>
+      
+        <p>
+          The dashed line shows the theoretical expected value.
+          Vertical scales differ between panels and may change between runs:
+          compare the axis labels, not just the visual height of a curve.
+        </p>
+      
+        <figure class="trajectory-card">
+          <figcaption>Total score Sₖ</figcaption>
+      
+          <svg
+            id="total-trajectories"
+            class="trajectory-plot"
+            viewBox="0 0 760 300"
+            role="img"
+            aria-label="Trajectories of the cumulative total score"
+          ></svg>
+        </figure>
+      
+        <figure class="trajectory-card">
+          <figcaption>Average score Sₖ/k</figcaption>
+      
+          <svg
+            id="average-trajectories"
+            class="trajectory-plot"
+            viewBox="0 0 760 300"
+            role="img"
+            aria-label="Trajectories of the average score"
+          ></svg>
+        </figure>
+      
+        <figure class="trajectory-card">
+          <figcaption>Normalized total score Sₖ/√k</figcaption>
+      
+          <svg
+            id="normalized-trajectories"
+            class="trajectory-plot"
+            viewBox="0 0 760 300"
+            role="img"
+            aria-label="Trajectories of the total score divided by the square root of k"
+          ></svg>
+        </figure>
+      
+        <p class="desc">
+          Plots start at k = 1 because division by k or √k is undefined
+          at k = 0. Concentration around the mean does not imply that
+          individual trajectories approach it monotonically.
+        </p>
+      </section>
 
       <section aria-labelledby="statistics-title">
         <h2 id="statistics-title">3. Final scores across attackers</h2>
