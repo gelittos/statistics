@@ -183,6 +183,13 @@ function invalidateSimulation() {
   momentsBody.replaceChildren();
   llnResult.textContent = "";
   aggregateResult.textContent = "";
+  for (const selector of [
+    "#total-trajectories",
+    "#average-trajectories",
+    "#normalized-trajectories"
+  ]) {
+  document.querySelector(selector).replaceChildren();
+}
 
   simulationStatus.textContent =
     "Parameters changed. Run the simulation again.";
@@ -210,6 +217,7 @@ function runSimulation() {
 
     simulationData = simulateAttackers(parameters);
     displaySimulation(simulationData);
+    renderTrajectoryPlots(simulationData);
 
     simulationStatus.textContent =
       `Completed: ${parameters.m} attackers, ` +
