@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="description"
+    content="Statistics Homework 3: random walks, the Law of Large Numbers and the Central Limit Theorem."
+  >
+
+  <title>Homework 3 | Gabriele Sottile · 2205153</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="styles.css">
+  <script src="homework-3.js" defer></script>
+</head>
+
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <div class="wrap">
+    <header class="top">
+      <a class="brand" href="index.html">STATISTICS</a>
+      <span class="meta">MSc in Cybersecurity · A.Y. 2026/27</span>
+    </header>
+
+    <main id="main">
+      <a class="back" href="index.html">← All homework</a>
+
+      <section class="hero">
+        <div class="eyebrow">Homework 03</div>
+
+        <h1>Random walks and limit theorems</h1>
+
+        <p class="intro">
+          Simulating penetration scores to explore the Law of Large
+          Numbers and the Central Limit Theorem.
+        </p>
+      </section>
+
+      <section aria-labelledby="model-title">
+        <h2 id="model-title">1. Models and interpretation</h2>
+
+        <p>
+          Each of m attackers attempts to penetrate n systems in sequence.
+          One random increment is generated for each attacker and system.
+          Increments are independent across systems and attackers,
+          with the same distribution throughout each experiment.
+        </p>
+
+        <p>
+          In the Bernoulli model, a success adds 1 and a failure adds 0.
+          In the symmetric Rademacher model, each step adds either
+          +1 or −1 with equal probability. The second model describes
+          a net score, rather than a count of penetrated systems.
+        </p>
+
+        <p class="notice">
+          This is a simplified stochastic model. Shared vulnerabilities,
+          attacker adaptation and dependence between attempts are not included.
+        </p>
+      </section>
+
+      <section aria-labelledby="simulation-title">
+        <h2 id="simulation-title">2. Run the simulation</h2>
+
+        <form id="simulation-form" class="experiment-controls">
+          <div>
+            <label for="score-model">Increment model</label>
+            <select id="score-model">
+              <option value="bernoulli">Bernoulli: 0 or 1</option>
+              <option value="rademacher">Rademacher: −1 or +1</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="system-count">Systems n</label>
+            <input
+              id="system-count"
+              type="number"
+              min="1"
+              max="1000"
+              step="1"
+              value="100"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="attacker-count">Attackers m</label>
+            <input
+              id="attacker-count"
+              type="number"
+              min="2"
+              max="2000"
+              step="1"
+              value="1000"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="success-probability">Success probability p</label>
+            <input
+              id="success-probability"
+              type="number"
+              min="0"
+              max="1"
+              step="any"
+              value="0.3"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="lln-tolerance">LLN tolerance ε</label>
+            <input
+              id="lln-tolerance"
+              type="number"
+              min="0.001"
+              max="1"
+              step="any"
+              value="0.1"
+              required
+            >
+          </div>
+
+          <button type="submit">Run simulation</button>
+        </form>
+
+        <p id="model-description" class="desc"></p>
+
+        <p class="desc">
+          Each run generates a new random sample. The limits on n and m
+          keep the interactive experiment manageable in the browser.
+        </p>
+
+        <p id="simulation-status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section aria-labelledby="statistics-title">
+        <h2 id="statistics-title">3. Final scores across attackers</h2>
+
+        <p>
+          Each attacker contributes one final observation to each row.
+          Empirical statistics use all simulated attackers.
+        </p>
+
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Empirical and theoretical moments</caption>
+
+            <thead>
+              <tr>
+                <th scope="col">Quantity</th>
+                <th scope="col">Empirical mean</th>
+                <th scope="col">Theoretical mean</th>
+                <th scope="col">Empirical variance</th>
+                <th scope="col">Theoretical variance</th>
+              </tr>
+            </thead>
+
+            <tbody id="simulation-moments"></tbody>
+          </table>
+        </div>
+
+        <p class="desc">
+          Empirical variance is calculated with denominator m.
+          It describes the simulated sample and is not the unbiased
+          estimator with denominator m − 1.
+        </p>
+
+        <p id="lln-result"></p>
+        <p id="aggregate-result"></p>
+      </section>
+
+      <section aria-labelledby="interpretation-title">
+        <h2 id="interpretation-title">4. What to look for</h2>
+
+        <p>
+          If an increment has mean μ and variance σ², the total Sₙ
+          has mean nμ and variance nσ². The average Sₙ/n has mean μ
+          and variance σ²/n. The normalized total Sₙ/√n has mean
+          √n μ and variance σ².
+        </p>
+
+        <p>
+          Increasing n reduces the variance of the average.
+          Increasing m provides more observations of the final-score
+          distribution, improving the precision of its empirical estimates.
+          It does not change the theoretical distribution of one attacker's score.
+        </p>
+
+        <p>
+          For Rademacher increments, μ = 0 and σ² = 1.
+          The Central Limit Theorem therefore applies directly to Sₙ/√n.
+          For Bernoulli increments, μ = p and σ² = p(1 − p).
+          When 0 &lt; p &lt; 1, the standardized quantity is
+          (Sₙ − np)/√(np(1 − p)).
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <span>Gabriele Sottile · Student ID 2205153</span>
+      <span>Statistics · Sapienza University of Rome</span>
+    </footer>
+  </div>
+</body>
+</html>
