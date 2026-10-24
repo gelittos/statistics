@@ -193,6 +193,15 @@ function invalidateSimulation() {
 
   simulationStatus.textContent =
     "Parameters changed. Run the simulation again.";
+  for (const selector of [
+  "#total-histogram",
+  "#average-histogram",
+  "#normalized-histogram"
+]) {
+  document.querySelector(selector).replaceChildren();
+}
+
+document.querySelector("#histogram-explanation").textContent = "";
 }
 
 // Aggiorna il controllo di p quando si cambia modello.
@@ -218,7 +227,7 @@ function runSimulation() {
     simulationData = simulateAttackers(parameters);
     displaySimulation(simulationData);
     renderTrajectoryPlots(simulationData);
-
+    renderScoreHistograms(simulationData);
     simulationStatus.textContent =
       `Completed: ${parameters.m} attackers, ` +
       `${parameters.n} systems, ${parameters.model} model.`;
@@ -482,4 +491,250 @@ function renderTrajectoryPlots(data) {
     (score, k) => score / Math.sqrt(k),
     k => Math.sqrt(k) * mu
   );
+}
+
+// Costruisce gli intervalli del totale prima della normalizzazione.
+function buildScoreHistogram(data) {
+  const { model } = data.parameters;
+  const totals = data.totals;
+
+  let minimum = Infinity;
+  let maximum = -Infinity;
+
+  for (const score of totals) {
+    minimum = Math.min(minimum, score);
+    maximum = Math.max(maximum, score);
+  }
+
+  // Bernoulli: valori interi consecutivi.
+  // Rademacher: a n fissato, i valori possibili distano 2.
+  const spacing = model === "bernoulli" ? 1 : 2;
+
+  const possiblePositions =
+    Math.round((maximum - minimum) / spacing) + 1;
+
+  // Raggruppa i valori per mantenere al massimo 25 barre.
+  const positionsPerBin = Math.max(
+    1,
+    Math.ceil(possiblePositions / 25)
+  );
+
+  const width = spacing * positionsPerBin;
+  const binCount = Math.ceil(possiblePositions / positionsPerBin);
+  const start = minimum - spacing / 2;
+  const counts = Array(binCount).fill(0);
+
+  for (const score of totals) {
+    const index = Math.floor((score - start) / width);
+    counts[index]++;
+  }
+
+  return { start, width, counts };
+}
+
+// Densità della distribuzione normale standard N(0, 1).
+function standardNormalDensity(z) {
+  return Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI);
+}
+
+// Disegna un istogramma, eventualmente con la normale standard.
+function drawScoreHistogram(
+  selector,
+  histogram,
+  sampleSize,
+  divisor,
+  axisLabel,
+  showNormal = false
+) {
+  const svg = document.querySelector(selector);
+  svg.replaceChildren();
+
+  const left = 74;
+  const right = 738;
+  const top = 26;
+  const bottom = 248;
+
+  const binWidth = histogram.width / divisor;
+  const minimum = histogram.start / divisor;
+  const maximum =
+    (histogram.start + histogram.width * histogram.counts.length)
+    / divisor;
+
+  const densities = histogram.counts.map(
+    count => count / (sampleSize * binWidth)
+  );
+
+  let highestDensity = Math.max(...densities);
+
+  if (showNormal) {
+    highestDensity = Math.max(
+      highestDensity,
+      standardNormalDensity(0)
+    );
+  }
+
+  const yMaximum = highestDensity * 1.15;
+
+  const x = value =>
+    left + (value - minimum) / (maximum - minimum) * (right - left);
+
+  const y = density =>
+    bottom - density / yMaximum * (bottom - top);
+
+  // Griglia orizzontale ed etichette della densità.
+  for (let tick = 0; tick <= 4; tick++) {
+    const density = yMaximum * tick / 4;
+
+    svg.append(
+      createTrajectorySvgElement("line", {
+        x1: left,
+        y1: y(density),
+        x2: right,
+        y2: y(density),
+        class: "trajectory-grid"
+      }),
+
+      createTrajectorySvgElement("text", {
+        x: left - 10,
+        y: y(density) + 4,
+        "text-anchor": "end",
+        class: "trajectory-label"
+      }, density.toFixed(2))
+    );
+  }
+
+  // Etichette dell'asse dei punteggi.
+  for (let tick = 0; tick <= 4; tick++) {
+    const value = minimum + (maximum - minimum) * tick / 4;
+
+    svg.append(
+      createTrajectorySvgElement("text", {
+        x: x(value),
+        y: bottom + 22,
+        "text-anchor": "middle",
+        class: "trajectory-label"
+      }, value.toFixed(2))
+    );
+  }
+
+  // Barre dell'istogramma.
+  histogram.counts.forEach((count, index) => {
+    const binStart = minimum + index * binWidth;
+    const binEnd = binStart + binWidth;
+    const density = densities[index];
+
+    const bar = createTrajectorySvgElement("rect", {
+      x: x(binStart),
+      y: y(density),
+      width: x(binEnd) - x(binStart),
+      height: bottom - y(density),
+      class: "histogram-bar"
+    });
+
+    bar.append(
+      createTrajectorySvgElement(
+        "title",
+        {},
+        `Interval [${binStart.toFixed(3)}, ${binEnd.toFixed(3)}): ` +
+        `${count} attackers; ${(100 * count / sampleSize).toFixed(1)}%`
+      )
+    );
+
+    svg.append(bar);
+  });
+
+  // Curva normale standard: solo dove richiesta.
+  if (showNormal) {
+    const coordinates = [];
+
+    for (let step = 0; step <= 240; step++) {
+      const value = minimum + (maximum - minimum) * step / 240;
+
+      coordinates.push(
+        `${x(value)},${y(standardNormalDensity(value))}`
+      );
+    }
+
+    svg.append(
+      createTrajectorySvgElement("polyline", {
+        points: coordinates.join(" "),
+        class: "histogram-normal"
+      })
+    );
+  }
+
+  // Assi e titoli.
+  svg.append(
+    createTrajectorySvgElement("line", {
+      x1: left,
+      y1: top,
+      x2: left,
+      y2: bottom,
+      class: "trajectory-axis"
+    }),
+
+    createTrajectorySvgElement("line", {
+      x1: left,
+      y1: bottom,
+      x2: right,
+      y2: bottom,
+      class: "trajectory-axis"
+    }),
+
+    createTrajectorySvgElement("text", {
+      x: left,
+      y: 16,
+      class: "trajectory-label"
+    }, "Density"),
+
+    createTrajectorySvgElement("text", {
+      x: (left + right) / 2,
+      y: 291,
+      "text-anchor": "middle",
+      class: "trajectory-label"
+    }, axisLabel)
+  );
+}
+
+// Disegna le tre distribuzioni dello stesso campione.
+function renderScoreHistograms(data) {
+  const { n, m, model } = data.parameters;
+  const histogram = buildScoreHistogram(data);
+
+  drawScoreHistogram(
+    "#total-histogram",
+    histogram,
+    m,
+    1,
+    "Total score Sₙ"
+  );
+
+  drawScoreHistogram(
+    "#average-histogram",
+    histogram,
+    m,
+    n,
+    "Average score Sₙ/n"
+  );
+
+  drawScoreHistogram(
+    "#normalized-histogram",
+    histogram,
+    m,
+    Math.sqrt(n),
+    "Normalized total Sₙ/√n",
+    model === "rademacher"
+  );
+
+  document.querySelector("#histogram-explanation").textContent =
+    model === "rademacher"
+      ? "The orange curve in the third panel is the standard normal " +
+        "density N(0,1), shown over the displayed score range. " +
+        "For large n, the normalized-score distribution approaches " +
+        "this normal distribution. Agreement also depends on m " +
+        "and on the histogram bins."
+      : "For Bernoulli increments, Sₙ/√n has mean p√n, " +
+        "so it does not converge to N(0,1) for fixed p > 0. " +
+        "For 0 < p < 1, the CLT instead applies to " +
+        "(Sₙ − np)/√(np(1 − p)).";
 }
