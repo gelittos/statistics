@@ -238,6 +238,61 @@
         <p id="lln-result"></p>
         <p id="aggregate-result"></p>
       </section>
+      <section aria-labelledby="distributions-title">
+        <h2 id="distributions-title">Final-score distributions</h2>
+      
+        <p>
+          These histograms use the final scores of all simulated attackers.
+          The horizontal axis represents the score, not the number of systems.
+          Bars show probability density: their total area is 1.
+        </p>
+      
+        <figure class="trajectory-card">
+          <figcaption>Total score Sₙ</figcaption>
+      
+          <svg
+            id="total-histogram"
+            class="trajectory-plot"
+            viewBox="0 0 760 300"
+            role="img"
+            aria-label="Histogram of final total scores"
+          ></svg>
+        </figure>
+      
+        <figure class="trajectory-card">
+          <figcaption>Average score Sₙ/n</figcaption>
+      
+          <svg
+            id="average-histogram"
+            class="trajectory-plot"
+            viewBox="0 0 760 300"
+            role="img"
+            aria-label="Histogram of final average scores"
+          ></svg>
+        </figure>
+      
+        <figure class="trajectory-card">
+          <figcaption>Normalized total score Sₙ/√n</figcaption>
+      
+          <svg
+            id="normalized-histogram"
+            class="trajectory-plot"
+            viewBox="0 0 760 300"
+            role="img"
+            aria-label="Histogram of normalized final scores"
+          ></svg>
+        </figure>
+      
+        <p id="histogram-explanation" class="desc"></p>
+      
+        <p class="desc">
+          Axis scales adjust to the sample. Compare numerical axis labels
+          across runs. The three histograms use corresponding bins:
+          normalization changes their horizontal scale, not the observations.
+          Finite-sample scores are discrete, even when a normal curve
+          provides a useful approximation.
+        </p>
+      </section>
 
       <section aria-labelledby="interpretation-title">
         <h2 id="interpretation-title">4. What to look for</h2>
