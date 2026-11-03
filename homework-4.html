@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="description"
+    content="Statistics Homework 4: Welford's recurrence formulas and sampling distributions of the mean and variance."
+  >
+
+  <title>Homework 4 | Gabriele Sottile · 2205153</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="styles.css">
+  <script src="homework-4.js" defer></script>
+</head>
+
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <div class="wrap">
+    <header class="top">
+      <a class="brand" href="index.html">STATISTICS</a>
+      <span class="meta">MSc in Cybersecurity · A.Y. 2026/27</span>
+    </header>
+
+    <main id="main">
+      <a class="back" href="index.html">← All homework</a>
+
+      <section class="hero">
+        <div class="eyebrow">Homework 04</div>
+
+        <h1>Online statistics and sampling distributions</h1>
+
+        <p class="intro">
+          Updating mean and variance with Welford's algorithm,
+          then studying their behavior across repeated samples.
+        </p>
+      </section>
+
+      <section aria-labelledby="welford-introduction">
+        <h2 id="welford-introduction">
+          Part 1 · Welford's recurrence formulas
+        </h2>
+
+        <p>
+          An online algorithm updates its statistics whenever a new
+          observation arrives. Here, “online” means processing data
+          sequentially; it does not refer to an internet connection.
+        </p>
+
+        <p>
+          Welford's algorithm maintains the observation count,
+          the current mean and the sum of squared deviations
+          from the current mean. Previous observations do not need
+          to be stored by the algorithm.
+        </p>
+
+        <div class="welford-formula">
+          SSₖ = Σᵢ₌₁ᵏ (xᵢ − x̄ₖ)²
+        </div>
+
+        <p class="desc">
+          SS is the sum of squared deviations from the mean,
+          not the uncentered sum Σxᵢ².
+        </p>
+      </section>
+
+      <section aria-labelledby="mean-derivation">
+        <h2 id="mean-derivation">1. Updating the mean</h2>
+
+        <p>
+          Let xₖ be the new observation and x̄ₖ₋₁ the mean of
+          the previous k − 1 observations.
+          For k ≥ 2, the updated mean is:
+        </p>
+
+        <div class="welford-formula">
+          x̄ₖ = [(k − 1)x̄ₖ₋₁ + xₖ] / k<br>
+          x̄ₖ = x̄ₖ₋₁ + (xₖ − x̄ₖ₋₁) / k
+        </div>
+
+        <p>
+          Define δₖ = xₖ − x̄ₖ₋₁, the difference between the new
+          observation and the previous mean. Then:
+        </p>
+
+        <div class="welford-formula">
+          x̄ₖ = x̄ₖ₋₁ + δₖ/k
+        </div>
+
+        <p>
+          The new observation moves the mean by a fraction of its
+          distance from the old mean. As k increases, each new
+          observation has a smaller weight.
+        </p>
+      </section>
+
+      <section aria-labelledby="ss-derivation">
+        <h2 id="ss-derivation">
+          2. Updating the sum of squared deviations
+        </h2>
+
+        <p>
+          Separate the new observation from the previous ones:
+        </p>
+
+        <div class="welford-formula">
+          SSₖ = Σᵢ₌₁ᵏ⁻¹ (xᵢ − x̄ₖ)² + (xₖ − x̄ₖ)²
+        </div>
+
+        <p>
+          Since x̄ₖ = x̄ₖ₋₁ + δₖ/k, every previous deviation
+          changes by −δₖ/k. Expanding the squares gives:
+        </p>
+
+        <div class="welford-formula">
+          SSₖ = SSₖ₋₁
+          − (2δₖ/k) Σᵢ₌₁ᵏ⁻¹ (xᵢ − x̄ₖ₋₁)
+          + (k − 1)δₖ²/k²
+          + (xₖ − x̄ₖ)²
+        </div>
+
+        <p>
+          The sum of deviations from the old mean is zero,
+          so the cross term vanishes. Also,
+          xₖ − x̄ₖ = (k − 1)δₖ/k. Therefore:
+        </p>
+
+        <div class="welford-formula">
+          SSₖ = SSₖ₋₁ + (k − 1)δₖ²/k²
+          + (k − 1)²δₖ²/k²<br>
+          SSₖ = SSₖ₋₁ + [(k − 1)/k]δₖ²<br>
+          <strong>SSₖ = SSₖ₋₁ + δₖ(xₖ − x̄ₖ)</strong>
+        </div>
+
+        <p class="notice">
+          The first difference uses the old mean.
+          The second difference uses the updated mean.
+        </p>
+      </section>
+
+      <section aria-labelledby="variance-derivation">
+        <h2 id="variance-derivation">
+          3. From SS to variance
+        </h2>
+
+        <p>
+          The descriptive variance divides SS by k.
+          The corrected sample variance divides SS by k − 1.
+          Under independent, identically distributed sampling,
+          the corrected version is an unbiased estimator
+          of the population variance.
+        </p>
+
+        <div class="welford-formula">
+          vₖ = SSₖ/k, for k ≥ 1<br>
+          sₖ² = SSₖ/(k − 1), for k ≥ 2
+        </div>
+
+        <p>
+          Substituting the recurrence for SS gives the corresponding
+          variance recurrences:
+        </p>
+
+        <div class="welford-formula">
+          vₖ = [(k − 1)/k]vₖ₋₁
+          + δₖ(xₖ − x̄ₖ)/k, for k ≥ 2<br><br>
+
+          sₖ² = [(k − 2)/(k − 1)]sₖ₋₁²
+          + δₖ(xₖ − x̄ₖ)/(k − 1), for k ≥ 3
+        </div>
+
+        <p>
+          Initially, the first observation gives x̄₁ = x₁ and SS₁ = 0.
+          The corrected sample variance is undefined with only one
+          observation. For two observations, s₂² = SS₂.
+        </p>
+      </section>
+
+      <section aria-labelledby="welford-core">
+        <h2 id="welford-core">4. The three-line update</h2>
+
+        <p>
+          Start with mean = 0 and SS = 0. For each observation x,
+          let k be the number of observations including the new one.
+          The core update is:
+        </p>
+
+        <pre class="welford-code"><code>const delta = x - mean;
+mean += delta / k;
+SS += delta * (x - mean);</code></pre>
+
+        <p>
+          After the update, the corrected sample variance is
+          SS/(k − 1), provided k ≥ 2.
+          The initial value mean = 0 is a computational convention:
+          an empty sample has no statistical mean.
+        </p>
+
+        <p>
+          The algorithm requires constant memory for its running state.
+          It also avoids the potentially unstable subtraction of
+          large, nearly equal quantities in Σxᵢ² − kx̄ₖ².
+        </p>
+      </section>
+
+      <section aria-labelledby="welford-demo-title">
+        <h2 id="welford-demo-title">
+          5. Follow the updates step by step
+        </h2>
+
+        <p>
+          Enter between 2 and 50 integer scores from 0 to 10,
+          separated by commas.
+          The table shows how each observation changes the running statistics.
+        </p>
+
+        <form id="welford-form" class="experiment-controls">
+          <div class="welford-input-group">
+            <label for="welford-values">Scores</label>
+
+            <input
+              id="welford-values"
+              type="text"
+              value="2, 7, 4, 9, 3"
+              required
+              aria-describedby="welford-input-help"
+            >
+          </div>
+
+          <button type="submit">Compute updates</button>
+
+          <button id="welford-random" type="button">
+            Generate 10 random scores
+          </button>
+        </form>
+
+        <p id="welford-input-help" class="desc">
+          Random scores are independently drawn from the discrete
+          uniform distribution on {0, 1, …, 10}.
+          Manual scores are useful for checking the arithmetic.
+        </p>
+
+        <p id="welford-error" role="alert"></p>
+
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Sequential updates</caption>
+
+            <thead>
+              <tr>
+                <th scope="col">k</th>
+                <th scope="col">New score xₖ</th>
+                <th scope="col">Old mean</th>
+                <th scope="col">δₖ</th>
+                <th scope="col">New mean</th>
+                <th scope="col">SSₖ</th>
+                <th scope="col">SSₖ/k</th>
+                <th scope="col">SSₖ/(k − 1)</th>
+              </tr>
+            </thead>
+
+            <tbody id="welford-steps"></tbody>
+          </table>
+        </div>
+
+        <p id="welford-summary" aria-live="polite"></p>
+        <p id="welford-check" class="desc"></p>
+
+        <p class="desc">
+          The calculation retains full numerical precision;
+          displayed values are rounded to four decimal places.
+          The displayed history is stored for teaching purposes,
+          although Welford's running update does not require it.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <span>Gabriele Sottile · Student ID 2205153</span>
+      <span>Statistics · Sapienza University of Rome</span>
+    </footer>
+  </div>
+</body>
+</html>
