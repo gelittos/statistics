@@ -428,3 +428,45 @@ body,h1,h1 span,h2,h3 {
   width: 100%;
   box-sizing: border-box;
 }
+/* Homework 4: sampling distributions */
+
+.sampling-histogram-card {
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid #9aa8b5;
+  border-radius: 12px;
+}
+
+.sampling-histogram-card figcaption {
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.sampling-histogram {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: inherit;
+}
+
+.sampling-chart-label {
+  fill: currentColor;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.sampling-chart-grid {
+  stroke: currentColor;
+  opacity: 0.12;
+}
+
+.sampling-chart-axis {
+  stroke: currentColor;
+  opacity: 0.65;
+}
+
+.sampling-chart-target {
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-dasharray: 7 5;
+}
