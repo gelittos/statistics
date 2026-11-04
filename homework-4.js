@@ -166,3 +166,210 @@ welfordRandomButton.addEventListener("click", () => {
 
 // Mostra subito l'esempio iniziale.
 runWelfordDemo();
+// ---------- Part 2: sampling experiment ----------
+
+const samplingForm = document.querySelector("#sampling-form");
+const samplingSystemsInput = document.querySelector("#sampling-systems");
+const samplingAttackersInput = document.querySelector("#sampling-attackers");
+
+const samplingStatus = document.querySelector("#sampling-status");
+const samplingFinalTable = document.querySelector("#sampling-final-results");
+const samplingComparisonTable =
+  document.querySelector("#sampling-comparison-results");
+
+const SCORE_MEAN = 5;
+const SCORE_VARIANCE = 10;
+
+// Conserva le statistiche dei singoli attaccanti anche per i futuri grafici.
+let samplingExperiment = null;
+
+// Legge e controlla i parametri.
+function readSamplingParameters() {
+  const n = samplingSystemsInput.valueAsNumber;
+  const m = samplingAttackersInput.valueAsNumber;
+
+  if (!Number.isInteger(n) || n < 2 || n > 1000) {
+    throw new Error("Choose an integer n between 2 and 1000.");
+  }
+
+  if (!Number.isInteger(m) || m < 2 || m > 5000) {
+    throw new Error("Choose an integer m between 2 and 5000.");
+  }
+
+  return { n, m };
+}
+
+// Media e varianza corretta di una raccolta di valori.
+// Questa funzione sarà applicata alle statistiche dei diversi attaccanti.
+function summarizeAcrossAttackers(values) {
+  let mean = 0;
+  let SS = 0;
+
+  for (let index = 0; index < values.length; index++) {
+    const k = index + 1;
+    const x = values[index];
+
+    const delta = x - mean;
+    mean += delta / k;
+    SS += delta * (x - mean);
+  }
+
+  return {
+    mean,
+    variance: SS / (values.length - 1)
+  };
+}
+
+// Simula i punteggi e conserva le statistiche ai checkpoint.
+function simulateSamplingExperiment(n, m) {
+  const checkpoints = [...new Set([
+    ...[5, 10, 30, 100, 500, 1000].filter(k => k <= n),
+    n
+  ])].sort((a, b) => a - b);
+
+  const snapshots = new Map();
+
+  for (const k of checkpoints) {
+    snapshots.set(k, {
+      means: [],
+      sampleVariances: []
+    });
+  }
+
+  for (let attacker = 0; attacker < m; attacker++) {
+    let mean = 0;
+    let SS = 0;
+
+    for (let k = 1; k <= n; k++) {
+      const x = Math.floor(Math.random() * 11);
+
+      // Welford: aggiornamento per il nuovo punteggio.
+      const delta = x - mean;
+      mean += delta / k;
+      SS += delta * (x - mean);
+
+      if (snapshots.has(k)) {
+        const snapshot = snapshots.get(k);
+
+        snapshot.means.push(mean);
+        snapshot.sampleVariances.push(SS / (k - 1));
+      }
+    }
+  }
+
+  return { n, m, checkpoints, snapshots };
+}
+
+// Aggiunge una riga a una delle tabelle.
+function appendSamplingRow(tableBody, values) {
+  const row = document.createElement("tr");
+
+  for (const value of values) {
+    const cell = document.createElement("td");
+    cell.textContent = String(value);
+    row.appendChild(cell);
+  }
+
+  tableBody.appendChild(row);
+}
+
+// Presenta il confronto fra numerosità e il riepilogo finale.
+function displaySamplingExperiment(experiment) {
+  samplingFinalTable.replaceChildren();
+  samplingComparisonTable.replaceChildren();
+
+  for (const k of experiment.checkpoints) {
+    const snapshot = experiment.snapshots.get(k);
+
+    const meansSummary = summarizeAcrossAttackers(
+      snapshot.means
+    );
+
+    const variancesSummary = summarizeAcrossAttackers(
+      snapshot.sampleVariances
+    );
+
+    appendSamplingRow(samplingComparisonTable, [
+      k,
+      formatWelfordNumber(meansSummary.mean),
+      formatWelfordNumber(variancesSummary.mean),
+      formatWelfordNumber(meansSummary.variance),
+      formatWelfordNumber(SCORE_VARIANCE / k),
+      formatWelfordNumber(variancesSummary.variance)
+    ]);
+
+    if (k === experiment.n) {
+      appendSamplingRow(samplingFinalTable, [
+        "Sample mean",
+        formatWelfordNumber(meansSummary.mean),
+        formatWelfordNumber(SCORE_MEAN)
+      ]);
+
+      appendSamplingRow(samplingFinalTable, [
+        "Corrected sample variance: SS/(n − 1)",
+        formatWelfordNumber(variancesSummary.mean),
+        formatWelfordNumber(SCORE_VARIANCE)
+      ]);
+
+      // SS/n = [SS/(n − 1)] × (n − 1)/n.
+      const descriptiveFactor = (k - 1) / k;
+
+      appendSamplingRow(samplingFinalTable, [
+        "Descriptive variance: SS/n",
+        formatWelfordNumber(
+          variancesSummary.mean * descriptiveFactor
+        ),
+        formatWelfordNumber(
+          SCORE_VARIANCE * descriptiveFactor
+        )
+      ]);
+    }
+  }
+}
+
+// Cancella risultati riferiti ai parametri precedenti.
+function invalidateSamplingExperiment() {
+  samplingExperiment = null;
+
+  samplingFinalTable.replaceChildren();
+  samplingComparisonTable.replaceChildren();
+
+  samplingStatus.textContent =
+    "Parameters changed. Run the sampling experiment again.";
+}
+
+// Avvia la simulazione.
+function runSamplingExperiment() {
+  invalidateSamplingExperiment();
+
+  try {
+    const { n, m } = readSamplingParameters();
+
+    samplingExperiment = simulateSamplingExperiment(n, m);
+    displaySamplingExperiment(samplingExperiment);
+
+    samplingStatus.textContent =
+      `Completed: ${m} attackers, ${n} scores per attacker. ` +
+      `Distribution: discrete uniform on {0, …, 10}.`;
+  } catch (error) {
+    samplingStatus.textContent = error.message;
+  }
+}
+
+samplingForm.addEventListener("submit", event => {
+  event.preventDefault();
+  runSamplingExperiment();
+});
+
+samplingSystemsInput.addEventListener(
+  "input",
+  invalidateSamplingExperiment
+);
+
+samplingAttackersInput.addEventListener(
+  "input",
+  invalidateSamplingExperiment
+);
+
+// Mostra una prima simulazione all'apertura.
+runSamplingExperiment();
