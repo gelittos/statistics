@@ -334,6 +334,17 @@ function invalidateSamplingExperiment() {
   samplingFinalTable.replaceChildren();
   samplingComparisonTable.replaceChildren();
 
+  document.querySelector("#sampling-means-histogram").replaceChildren();
+  document.querySelector("#sampling-variances-histogram").replaceChildren();
+
+  document.querySelector(
+    "#sampling-histograms-description"
+  ).textContent = "";
+
+  const select = document.querySelector("#sampling-checkpoint");
+  select.replaceChildren();
+  select.disabled = true;
+
   samplingStatus.textContent =
     "Parameters changed. Run the sampling experiment again.";
 }
@@ -347,6 +358,7 @@ function runSamplingExperiment() {
 
     samplingExperiment = simulateSamplingExperiment(n, m);
     displaySamplingExperiment(samplingExperiment);
+    prepareSamplingHistograms(samplingExperiment);
 
     samplingStatus.textContent =
       `Completed: ${m} attackers, ${n} scores per attacker. ` +
@@ -373,3 +385,262 @@ samplingAttackersInput.addEventListener(
 
 // Mostra una prima simulazione all'apertura.
 runSamplingExperiment();
+// ---------- Sampling histograms ----------
+
+// Crea un elemento SVG.
+function createSamplingSvgElement(tag, attributes, text = "") {
+  const element = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    tag
+  );
+
+  for (const [name, value] of Object.entries(attributes)) {
+    element.setAttribute(name, value);
+  }
+
+  if (text !== "") {
+    element.textContent = text;
+  }
+
+  return element;
+}
+
+// Disegna una distribuzione empirica e il suo riferimento teorico.
+function drawSamplingHistogram(
+  selector,
+  values,
+  target,
+  fixedMaximum,
+  axisLabel,
+  color,
+  automaticScale
+) {
+  const svg = document.querySelector(selector);
+  svg.replaceChildren();
+
+  const left = 74;
+  const right = 738;
+  const top = 30;
+  const bottom = 248;
+
+  let minimum = 0;
+  let maximum = fixedMaximum;
+
+  if (automaticScale) {
+    minimum = Math.min(target, ...values);
+    maximum = Math.max(target, ...values);
+
+    const padding = Math.max((maximum - minimum) * 0.1, 0.1);
+
+    minimum = Math.max(0, minimum - padding);
+    maximum = Math.min(fixedMaximum, maximum + padding);
+  }
+
+  const binCount = automaticScale ? 25 : 50;
+  const binWidth = (maximum - minimum) / binCount;
+  const counts = Array(binCount).fill(0);
+
+  for (const value of values) {
+    // Include anche il valore eventualmente uguale all'estremo destro.
+    const index = Math.min(
+      binCount - 1,
+      Math.max(0, Math.floor((value - minimum) / binWidth))
+    );
+
+    counts[index]++;
+  }
+
+  const densities = counts.map(
+    count => count / (values.length * binWidth)
+  );
+
+  const yMaximum = Math.max(...densities) * 1.15;
+
+  const x = value =>
+    left + (value - minimum) / (maximum - minimum) * (right - left);
+
+  const y = density =>
+    bottom - density / yMaximum * (bottom - top);
+
+  // Griglia ed etichette degli assi.
+  for (let tick = 0; tick <= 4; tick++) {
+    const density = yMaximum * tick / 4;
+    const value = minimum + (maximum - minimum) * tick / 4;
+
+    svg.append(
+      createSamplingSvgElement("line", {
+        x1: left,
+        y1: y(density),
+        x2: right,
+        y2: y(density),
+        class: "sampling-chart-grid"
+      }),
+
+      createSamplingSvgElement("text", {
+        x: left - 10,
+        y: y(density) + 4,
+        "text-anchor": "end",
+        class: "sampling-chart-label"
+      }, density.toFixed(2)),
+
+      createSamplingSvgElement("text", {
+        x: x(value),
+        y: bottom + 22,
+        "text-anchor": "middle",
+        class: "sampling-chart-label"
+      }, value.toFixed(2))
+    );
+  }
+
+  // Barre: l'area rappresenta la frequenza relativa.
+  counts.forEach((count, index) => {
+    const binStart = minimum + index * binWidth;
+    const binEnd = binStart + binWidth;
+
+    const bar = createSamplingSvgElement("rect", {
+      x: x(binStart),
+      y: y(densities[index]),
+      width: x(binEnd) - x(binStart),
+      height: bottom - y(densities[index]),
+      fill: color,
+      "fill-opacity": 0.7,
+      stroke: color,
+      "stroke-width": 0.5
+    });
+
+    const closingBracket = index === binCount - 1 ? "]" : ")";
+
+    bar.append(
+      createSamplingSvgElement(
+        "title",
+        {},
+        `[${binStart.toFixed(3)}, ${binEnd.toFixed(3)}` +
+        `${closingBracket}: ${count} attackers ` +
+        `(${(100 * count / values.length).toFixed(1)}%)`
+      )
+    );
+
+    svg.append(bar);
+  });
+
+  // Linea del valore teorico atteso.
+  svg.append(
+    createSamplingSvgElement("line", {
+      x1: x(target),
+      y1: top,
+      x2: x(target),
+      y2: bottom,
+      class: "sampling-chart-target"
+    }),
+
+    createSamplingSvgElement("text", {
+      x: x(target),
+      y: top - 8,
+      "text-anchor": "middle",
+      class: "sampling-chart-label"
+    }, `Target = ${target}`),
+
+    createSamplingSvgElement("line", {
+      x1: left,
+      y1: top,
+      x2: left,
+      y2: bottom,
+      class: "sampling-chart-axis"
+    }),
+
+    createSamplingSvgElement("line", {
+      x1: left,
+      y1: bottom,
+      x2: right,
+      y2: bottom,
+      class: "sampling-chart-axis"
+    }),
+
+    createSamplingSvgElement("text", {
+      x: left,
+      y: 16,
+      class: "sampling-chart-label"
+    }, "Density"),
+
+    createSamplingSvgElement("text", {
+      x: (left + right) / 2,
+      y: 291,
+      "text-anchor": "middle",
+      class: "sampling-chart-label"
+    }, axisLabel)
+  );
+}
+
+// Mostra i grafici per il checkpoint selezionato.
+function updateSamplingHistograms() {
+  if (samplingExperiment === null) return;
+
+  const k = Number(
+    document.querySelector("#sampling-checkpoint").value
+  );
+
+  const automaticScale =
+    document.querySelector("#sampling-auto-scale").checked;
+
+  const snapshot = samplingExperiment.snapshots.get(k);
+
+  drawSamplingHistogram(
+    "#sampling-means-histogram",
+    snapshot.means,
+    SCORE_MEAN,
+    10,
+    "Sample mean",
+    "#397ec0",
+    automaticScale
+  );
+
+  drawSamplingHistogram(
+    "#sampling-variances-histogram",
+    snapshot.sampleVariances,
+    SCORE_VARIANCE,
+    50,
+    "Corrected sample variance",
+    "#d97728",
+    automaticScale
+  );
+
+  document.querySelector("#sampling-histograms-description").textContent =
+    `${samplingExperiment.m} attackers, ${k} scores per attacker. ` +
+    `Changing the checkpoint reuses the existing simulation.`;
+}
+
+// Aggiorna l'elenco dei checkpoint dopo una nuova simulazione.
+function prepareSamplingHistograms(experiment) {
+  const select = document.querySelector("#sampling-checkpoint");
+  const previousValue = Number(select.value);
+
+  select.replaceChildren();
+
+  for (const k of experiment.checkpoints) {
+    const option = document.createElement("option");
+
+    option.value = String(k);
+    option.textContent = `${k} systems`;
+
+    select.appendChild(option);
+  }
+
+  select.value = String(
+    experiment.checkpoints.includes(previousValue)
+      ? previousValue
+      : experiment.n
+  );
+
+  select.disabled = false;
+  updateSamplingHistograms();
+}
+
+document.querySelector("#sampling-checkpoint").addEventListener(
+  "change",
+  updateSamplingHistograms
+);
+
+document.querySelector("#sampling-auto-scale").addEventListener(
+  "change",
+  updateSamplingHistograms
+);
