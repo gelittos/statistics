@@ -283,6 +283,144 @@ SS += delta * (x - mean);</code></pre>
           although Welford's running update does not require it.
         </p>
       </section>
+      <section aria-labelledby="sampling-title">
+        <h2 id="sampling-title">
+          Part 2 · Sampling mean and variance
+        </h2>
+      
+        <p>
+          Each of m attackers receives one score for each of n systems.
+          Scores are independent and uniformly distributed over
+          the integers {0, 1, …, 10}.
+          The same distribution is used for every attacker and system.
+        </p>
+      
+        <div class="welford-formula">
+          P(X = j) = 1/11, for j = 0, …, 10<br>
+          μ = E[X] = 5<br>
+          E[X²] = 35<br>
+          σ² = E[X²] − μ² = 10
+        </div>
+      
+        <p>
+          For each attacker, Welford's recurrence computes the sample mean
+          and the corrected sample variance SS/(n − 1).
+          Across attackers, we then study the averages and dispersion
+          of these two estimators.
+        </p>
+      
+        <form id="sampling-form" class="experiment-controls">
+          <div>
+            <label for="sampling-systems">Systems per attacker n</label>
+            <input
+              id="sampling-systems"
+              type="number"
+              min="2"
+              max="1000"
+              step="1"
+              value="1000"
+              required
+            >
+          </div>
+      
+          <div>
+            <label for="sampling-attackers">Attackers m</label>
+            <input
+              id="sampling-attackers"
+              type="number"
+              min="2"
+              max="5000"
+              step="1"
+              value="2000"
+              required
+            >
+          </div>
+      
+          <button type="submit">Run sampling experiment</button>
+        </form>
+      
+        <p id="sampling-status" role="status" aria-live="polite"></p>
+      </section>
+      
+      <section aria-labelledby="sampling-final-title">
+        <h2 id="sampling-final-title">Results at the final sample size</h2>
+      
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Averages across all attackers</caption>
+      
+            <thead>
+              <tr>
+                <th scope="col">Statistic</th>
+                <th scope="col">Empirical average</th>
+                <th scope="col">Theoretical expectation</th>
+              </tr>
+            </thead>
+      
+            <tbody id="sampling-final-results"></tbody>
+          </table>
+        </div>
+      
+        <p>
+          The corrected sample variance has expectation σ² = 10.
+          The descriptive variance SS/n has expectation
+          [(n − 1)/n]σ² and therefore underestimates the population
+          variance on average.
+        </p>
+      </section>
+      
+      <section aria-labelledby="sampling-comparison-title">
+        <h2 id="sampling-comparison-title">
+          What changes when the sample size increases?
+        </h2>
+      
+        <p>
+          Checkpoints use the same attackers at increasing sample sizes.
+          Set n = 1000 to include 5, 10, 30, 100, 500 and 1000 systems.
+          The selected final n is also included.
+          Rows share observations and are not independent experiments.
+        </p>
+      
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Sampling distributions across attackers</caption>
+      
+            <thead>
+              <tr>
+                <th scope="col">Systems k</th>
+                <th scope="col">Average sample mean</th>
+                <th scope="col">Average corrected sample variance</th>
+                <th scope="col">Variance of sample means</th>
+                <th scope="col">Theoretical variance of sample means</th>
+                <th scope="col">Variance of corrected sample variances</th>
+              </tr>
+            </thead>
+      
+            <tbody id="sampling-comparison-results"></tbody>
+          </table>
+        </div>
+      
+        <p class="desc">
+          Between-attacker variances use denominator m − 1.
+          Each individual attacker's corrected sample variance uses
+          denominator k − 1. These denominators refer to different
+          collections of observations.
+        </p>
+      
+        <p>
+          The average sample mean should be close to 5, and the average
+          corrected sample variance should be close to 10.
+          Increasing k reduces the variability of the estimators;
+          it does not change their theoretical expectations.
+        </p>
+      
+        <p>
+          In particular, Var(X̄ₖ) = 10/k.
+          For this bounded score distribution, the variance of the
+          corrected sample variance also tends to zero as k increases.
+          Empirical estimates may fluctuate between checkpoints and runs.
+        </p>
+      </section>
     </main>
 
     <footer>
