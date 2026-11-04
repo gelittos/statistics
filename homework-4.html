@@ -421,6 +421,68 @@ SS += delta * (x - mean);</code></pre>
           Empirical estimates may fluctuate between checkpoints and runs.
         </p>
       </section>
+      <section aria-labelledby="sampling-histograms-title">
+        <h2 id="sampling-histograms-title">
+          Sampling distributions: a visual comparison
+        </h2>
+        <div class="experiment-controls">
+          <div>
+            <label for="sampling-checkpoint">Systems per attacker</label>
+            <select id="sampling-checkpoint"></select>
+          </div>
+      
+          <label>
+            <input id="sampling-auto-scale" type="checkbox" checked>
+            Adapt horizontal axes to the observed values
+          </label>
+        </div>
+      
+        <p id="sampling-histograms-description" class="desc"></p>
+      
+        <figure class="sampling-histogram-card">
+          <figcaption>Distribution of sample means</figcaption>
+      
+          <svg
+            id="sampling-means-histogram"
+            class="sampling-histogram"
+            viewBox="0 0 760 300"
+            role="img"
+            aria-label="Histogram of sample means across attackers"
+          ></svg>
+        </figure>
+      
+        <figure class="sampling-histogram-card">
+          <figcaption>Distribution of corrected sample variances</figcaption>
+      
+          <svg
+            id="sampling-variances-histogram"
+            class="sampling-histogram"
+            viewBox="0 0 760 300"
+            role="img"
+            aria-label="Histogram of corrected sample variances across attackers"
+          ></svg>
+        </figure>
+      
+        <p>
+          Each attacker contributes one value to each histogram.
+          The dashed reference lines mark the theoretical expectations:
+          5 for the sample mean and 10 for the corrected sample variance.
+          Bar areas represent relative frequencies.
+        </p>
+      
+        <p class="desc">
+          Automatic horizontal scaling reveals the shape of each sample.
+          Disable it to compare concentration using fixed horizontal ranges:
+          0–10 for means and 0–50 for corrected sample variances.
+          Vertical density scales remain automatic.
+        </p>
+      
+        <p>
+          Increasing the sample size generally concentrates both distributions
+          around their targets. The variance estimator is not necessarily
+          normally distributed, especially for small samples.
+        </p>
+      </section>
     </main>
 
     <footer>
