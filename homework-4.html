@@ -483,6 +483,193 @@ SS += delta * (x - mean);</code></pre>
           normally distributed, especially for small samples.
         </p>
       </section>
+      <section aria-labelledby="sampling-conclusions-title">
+        <h2 id="sampling-conclusions-title">
+          Conclusions and relevance to statistical inference
+        </h2>
+      
+        <h3>Recorded results</h3>
+      
+        <p>
+          In the recorded experiment, the final sample size was
+          n = 1000 observations per attacker.
+          Scores followed the discrete uniform distribution on
+          {0, 1, …, 10}, with theoretical mean μ = 5
+          and variance σ² = 10.
+        </p>
+      
+        <p>
+          The average sample mean was 4.9990, close to 5.
+          The average corrected sample variance was 10.0065,
+          close to 10.
+          The average descriptive variance was 9.9965,
+          close to its theoretical expectation of 9.99.
+        </p>
+      
+        <p class="desc">
+          These values describe one recorded run.
+          New simulations produce different empirical results.
+        </p>
+      
+        <h3>Unbiasedness does not imply precision</h3>
+      
+        <p>
+          The sample mean and corrected sample variance are unbiased:
+          E[X̄ₙ] = μ and E[sₙ²] = σ².
+          This means that their expectations match the population
+          parameters. It does not mean that every individual sample
+          produces the correct values.
+        </p>
+      
+        <p>
+          At a sample size of 5, the average corrected sample variance
+          was already 10.0337, close to the target 10.
+          However, the variance of those estimates across attackers
+          was 26.1812, showing substantial variability.
+        </p>
+      
+        <p>
+          At a sample size of 1000, the average corrected sample variance
+          was 10.0065, while its between-attacker variance had fallen
+          to 0.0781. The estimator remained centered near the same target
+          but became much more precise.
+        </p>
+      
+        <h3>Increasing sample size reduces sampling variability</h3>
+      
+        <p>
+          The variance of the sample mean is σ²/n = 10/n.
+          In the experiment, the empirical variance of sample means
+          decreased from 1.9317 at n = 5 to 0.0098 at n = 1000.
+          The corresponding theoretical values are 2 and 0.01.
+        </p>
+      
+        <p>
+          The sample mean therefore becomes more concentrated around 5
+          as the number of systems attempted by each attacker increases.
+          For the chosen bounded distribution, the corrected sample
+          variance also becomes concentrated around 10.
+          Both estimators are consistent.
+        </p>
+      
+        <p>
+          Consistency concerns convergence as sample size increases.
+          It differs from unbiasedness, which concerns the expectation
+          of an estimator at a fixed sample size.
+          Finite-sample estimates may fluctuate between checkpoints.
+        </p>
+      
+        <h3>Why divide by n − 1?</h3>
+      
+        <p>
+          Deviations are measured from the sample mean, which was itself
+          estimated from the same observations.
+          These deviations sum to zero, leaving n − 1 degrees of freedom.
+          Under independent, identically distributed sampling,
+          E[SSₙ] = (n − 1)σ².
+        </p>
+      
+        <p>
+          Dividing by n − 1 therefore gives an unbiased variance estimator.
+          Dividing by n gives expectation [(n − 1)/n]σ²,
+          which is smaller than σ² when σ² is positive.
+          For our distribution, this expectation is 8 at n = 5
+          and 9.99 at n = 1000.
+        </p>
+      
+        <p>
+          The downward bias becomes smaller as n increases.
+          Although SSₙ/n is biased at finite sample sizes,
+          it is also consistent for the population variance.
+          Bias does not automatically imply inconsistency.
+        </p>
+      
+        <h3>Why this matters for inferential statistics</h3>
+      
+        <p>
+          In the simulation, the population parameters are known,
+          so we can assess the estimators.
+          In an actual statistical investigation, these parameters
+          are usually unknown and must be estimated from observed data.
+        </p>
+      
+        <p>
+          Each attacker represents one possible sample.
+          Comparing many attackers approximates the sampling distribution
+          of an estimator: the distribution of estimates obtained
+          by repeating the sampling procedure.
+          This reveals how much an estimate may vary from sample to sample.
+        </p>
+      
+        <p>
+          The standard deviation of the sample mean is its standard error:
+          σ/√n. When σ is unknown, it can be estimated using s/√n.
+          Standard errors help quantify uncertainty and construct
+          confidence intervals under appropriate assumptions.
+        </p>
+      
+        <p>
+          For example, quadrupling the sample size halves the theoretical
+          standard error of the sample mean.
+          More observations improve precision, but the improvement follows
+          a square-root relationship rather than a linear one.
+        </p>
+      
+        <h3>The different roles of n and m</h3>
+      
+        <p>
+          Increasing n gives each attacker more observations and reduces
+          the variability of that attacker's estimators.
+          Increasing m gives the experiment more repeated samples,
+          improving our estimates of the sampling distributions.
+          It does not change the theoretical sampling distribution
+          at a fixed n.
+        </p>
+      
+        <p>
+          The average of the corrected sample variances describes
+          within-attacker score variability and estimates σ² = 10.
+          The variance of the sample means describes between-sample
+          variability and estimates σ²/n.
+          These are different quantities.
+        </p>
+      
+        <h3>What Welford contributes</h3>
+      
+        <p>
+          Welford's recurrence computes the same mean and sum of squared
+          deviations as the corresponding batch calculation, up to
+          floating-point rounding.
+          It updates the statistics sequentially with constant memory
+          for its running state.
+        </p>
+      
+        <p>
+          This is useful for streams of security events or measurements,
+          where observations arrive over time and storing the entire
+          history may be unnecessary or impractical.
+          Welford changes how the statistics are computed;
+          it does not change their statistical properties.
+        </p>
+      
+        <h3>Limitations</h3>
+      
+        <p>
+          The experiment assumes independent observations from a fixed
+          distribution and independence between attackers.
+          Real penetration scores may exhibit dependence, changing
+          probabilities or differences between systems and attackers.
+          Such features would require a different statistical model.
+        </p>
+      
+        <p>
+          Checkpoints reuse the same trajectories, so their results
+          are dependent. Histograms also depend on the number of attackers,
+          interval widths and axis settings.
+          The simulation illustrates the theoretical properties;
+          it does not replace their mathematical justification.
+        </p>
+      </section>
     </main>
 
     <footer>
