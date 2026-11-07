@@ -262,3 +262,197 @@ valueBandsInput.addEventListener(
 );
 
 runIntegrationExperiment();
+// ---------- Convergence and timing comparison ----------
+
+// Inserisce una riga nella tabella indicata.
+function appendIntegrationComparisonRow(tableBody, values) {
+  const row = document.createElement("tr");
+
+  for (const value of values) {
+    const cell = document.createElement("td");
+    cell.textContent = String(value);
+    row.appendChild(cell);
+  }
+
+  tableBody.appendChild(row);
+}
+
+// Cancella i confronti precedenti.
+function clearIntegrationComparison() {
+  document.querySelector(
+    "#integration-convergence-results"
+  ).replaceChildren();
+
+  document.querySelector(
+    "#integration-timing-results"
+  ).replaceChildren();
+
+  document.querySelector(
+    "#integration-comparison-status"
+  ).textContent = "";
+}
+
+// Misura cinque gruppi di integrazioni.
+// Restituisce il tempo mediano per una singola integrazione.
+function benchmarkIntegration(operation, repetitions) {
+  // Breve riscaldamento del metodo.
+  for (let i = 0; i < 10; i++) {
+    operation();
+  }
+
+  const batchTimes = [];
+  let checksum = 0;
+
+  for (let batch = 0; batch < 5; batch++) {
+    const start = performance.now();
+
+    for (let repetition = 0; repetition < repetitions; repetition++) {
+      checksum += operation().value;
+    }
+
+    batchTimes.push(performance.now() - start);
+  }
+
+  batchTimes.sort((a, b) => a - b);
+
+  return {
+    microseconds: batchTimes[2] * 1000 / repetitions,
+    checksum
+  };
+}
+
+// Esegue il confronto per la funzione attualmente selezionata.
+async function runIntegrationComparison() {
+  clearIntegrationComparison();
+
+  const status = document.querySelector(
+    "#integration-comparison-status"
+  );
+
+  const accuracyTable = document.querySelector(
+    "#integration-convergence-results"
+  );
+
+  const timingTable = document.querySelector(
+    "#integration-timing-results"
+  );
+
+  const definition =
+    integrationFunctions[integrationFunctionInput.value];
+
+  if (!definition) {
+    status.textContent = "Choose a valid function.";
+    return;
+  }
+
+  // Evita modifiche ai parametri mentre il confronto è in corso.
+  const controls = [
+    ...integrationForm.querySelectorAll("input, select, button"),
+    document.querySelector("#run-integration-comparison")
+  ];
+
+  const previousDisabledStates = controls.map(
+    control => control.disabled
+  );
+
+  controls.forEach(control => {
+    control.disabled = true;
+  });
+
+  try {
+    const resolutions = [10, 30, 100, 300, 1000, 3000, 10000];
+
+    for (const resolution of resolutions) {
+      status.textContent =
+        `${definition.label}. Testing N = K = ${resolution}…`;
+
+      // Lascia al browser la possibilità di aggiornare la pagina.
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      const midpoint = integrateMidpoints(definition, resolution);
+      const bands = integrateValueBands(definition, resolution);
+
+      appendIntegrationComparisonRow(accuracyTable, [
+        resolution,
+        formatIntegrationNumber(midpoint.value),
+        formatIntegrationNumber(
+          Math.abs(midpoint.value - definition.exact)
+        ),
+        formatIntegrationNumber(bands.value),
+        formatIntegrationNumber(
+          Math.abs(bands.value - definition.exact)
+        ),
+        formatIntegrationNumber(bands.errorBound)
+      ]);
+
+      // Ripete maggiormente le integrazioni con pochi intervalli.
+      const repetitions = Math.max(
+        20,
+        Math.ceil(100000 / resolution)
+      );
+
+      const midpointOperation = () =>
+        integrateMidpoints(definition, resolution);
+
+      const bandsOperation = () =>
+        integrateValueBands(definition, resolution);
+
+      let midpointTiming;
+      let bandsTiming;
+
+      // Alterna l'ordine per non misurare sempre lo stesso metodo prima.
+      if (resolutions.indexOf(resolution) % 2 === 0) {
+        midpointTiming = benchmarkIntegration(
+          midpointOperation,
+          repetitions
+        );
+
+        bandsTiming = benchmarkIntegration(
+          bandsOperation,
+          repetitions
+        );
+      } else {
+        bandsTiming = benchmarkIntegration(
+          bandsOperation,
+          repetitions
+        );
+
+        midpointTiming = benchmarkIntegration(
+          midpointOperation,
+          repetitions
+        );
+      }
+
+      // Controlla che i risultati calcolati siano numeri finiti.
+      if (
+        !Number.isFinite(midpointTiming.checksum) ||
+        !Number.isFinite(bandsTiming.checksum)
+      ) {
+        throw new Error("A non-finite result occurred during timing.");
+      }
+
+      appendIntegrationComparisonRow(timingTable, [
+        resolution,
+        midpointTiming.microseconds.toFixed(3),
+        bandsTiming.microseconds.toFixed(3),
+        repetitions,
+        5
+      ]);
+    }
+
+    status.textContent =
+      `Comparison completed for ${definition.label}. ` +
+      `Timings are estimates from this browser session.`;
+  } catch (error) {
+    status.textContent = error.message;
+  } finally {
+    controls.forEach((control, index) => {
+      control.disabled = previousDisabledStates[index];
+    });
+  }
+}
+
+document.querySelector("#run-integration-comparison").addEventListener(
+  "click",
+  runIntegrationComparison
+);
