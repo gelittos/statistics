@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="description"
+    content="Statistics Homework 5: Riemann and Lebesgue integration, and numerical computation of the normal CDF."
+  >
+
+  <title>Homework 5 | Gabriele Sottile · 2205153</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="styles.css">
+  <script src="homework-5.js" defer></script>
+</head>
+
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <div class="wrap">
+    <header class="top">
+      <a class="brand" href="index.html">STATISTICS</a>
+      <span class="meta">MSc in Cybersecurity · A.Y. 2026/27</span>
+    </header>
+
+    <main id="main">
+      <a class="back" href="index.html">← All homework</a>
+
+      <section class="hero">
+        <div class="eyebrow">Homework 05</div>
+
+        <h1>Numerical integration and the normal CDF</h1>
+
+        <p class="intro">
+          Comparing domain and value partitions,
+          then applying numerical integration to probability.
+        </p>
+      </section>
+
+      <section aria-labelledby="integration-title">
+        <h2 id="integration-title">
+          Part 1 · Riemann and Lebesgue integration
+        </h2>
+
+        <p>
+          Riemann sums partition the domain into intervals.
+          Lebesgue integration instead groups domain points according
+          to the values taken by the function.
+          Both integrals agree for the bounded Riemann-integrable
+          functions considered in this first experiment.
+        </p>
+
+        <h3>Domain partition: midpoint rule</h3>
+
+        <div class="integration-formula">
+          Δx = (b − a)/N<br>
+          xᵢ = a + (i + 1/2)Δx, for i = 0, …, N − 1<br>
+          Rₙ = Σᵢ f(xᵢ)Δx
+        </div>
+
+        <h3>Value partition: simple-function approximation</h3>
+
+        <p>
+          Divide the interval from the minimum to the maximum function
+          value into K equal bands. For each band Aⱼ in the domain,
+          multiply its measure by the midpoint cⱼ of the value band.
+        </p>
+
+        <div class="integration-formula">
+          Aⱼ = {x : f(x) belongs to value band j}<br>
+          Lₖ = Σⱼ cⱼ λ(Aⱼ)
+        </div>
+
+        <p>
+          Here λ(Aⱼ) is computed analytically for each selected function.
+          It is a domain length, not a count of sampled points.
+          The numerical approximation comes from replacing the
+          function values within each band by cⱼ.
+        </p>
+
+        <p class="notice">
+          Exact preimage measures use function-specific mathematical
+          information. They are not available automatically for
+          an arbitrary function.
+        </p>
+      </section>
+
+      <section aria-labelledby="integration-controls-title">
+        <h2 id="integration-controls-title">Run the comparison</h2>
+
+        <form id="integration-form" class="experiment-controls">
+          <div>
+            <label for="integration-function">Function</label>
+
+            <select id="integration-function">
+              <option value="square">x² on [0, 1]</option>
+              <option value="sine">sin(x) on [0, π]</option>
+              <option value="step">1 for x &lt; 0.5; 3 otherwise</option>
+              <option value="absolute">|x − 0.5| on [0, 1]</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="domain-intervals">Domain intervals N</label>
+            <input
+              id="domain-intervals"
+              type="number"
+              min="1"
+              max="10000"
+              step="1"
+              value="100"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="value-bands">Value bands K</label>
+            <input
+              id="value-bands"
+              type="number"
+              min="1"
+              max="10000"
+              step="1"
+              value="100"
+              required
+            >
+          </div>
+
+          <button type="submit">Compute integrals</button>
+        </form>
+
+        <p id="integration-status" role="status" aria-live="polite"></p>
+        <p id="integration-description"></p>
+
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Numerical approximations</caption>
+
+            <thead>
+              <tr>
+                <th scope="col">Method</th>
+                <th scope="col">Approximation</th>
+                <th scope="col">Reference integral</th>
+                <th scope="col">Absolute error</th>
+              </tr>
+            </thead>
+
+            <tbody id="integration-results"></tbody>
+          </table>
+        </div>
+
+        <p id="integration-bounds"></p>
+        <p id="integration-cost" class="desc"></p>
+      </section>
+
+      <section aria-labelledby="integration-interpretation">
+        <h2 id="integration-interpretation">How to interpret the results</h2>
+
+        <p>
+          The two methods partition different axes, so N and K control
+          different approximation errors. Equal values of N and K
+          do not imply equal computational work or equal accuracy.
+        </p>
+
+        <p>
+          For the value-partition method, using the lower and upper
+          endpoints of each band produces lower and upper simple-function
+          integrals. The exact integral lies between them.
+          The midpoint approximation is halfway between these bounds.
+        </p>
+
+        <div class="integration-formula">
+          Lower ≤ ∫f(x) dx ≤ Upper<br>
+          Upper − Lower = (b − a)Δy<br>
+          |Lₖ − ∫f(x) dx| ≤ (b − a)Δy/2
+        </div>
+
+        <p>
+          These bounds rely on exact preimage measures.
+          They would require additional error control if those measures
+          were estimated from a finite sample.
+        </p>
+
+        <p>
+          A very small error at one resolution does not establish
+          a general convergence rate.
+          Symmetry, cancellation and alignment with a discontinuity
+          can make particular cases unusually accurate.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <span>Gabriele Sottile · Student ID 2205153</span>
+      <span>Statistics · Sapienza University of Rome</span>
+    </footer>
+  </div>
+</body>
+</html>
