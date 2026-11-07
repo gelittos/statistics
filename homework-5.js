@@ -296,29 +296,70 @@ function clearIntegrationComparison() {
 
 // Misura cinque gruppi di integrazioni.
 // Restituisce il tempo mediano per una singola integrazione.
-function benchmarkIntegration(operation, repetitions) {
-  // Breve riscaldamento del metodo.
-  for (let i = 0; i < 10; i++) {
+// Calibra le ripetizioni e misura cinque gruppi di integrazioni.
+function benchmarkIntegration(operation, initialRepetitions) {
+  const targetMilliseconds = 20;
+  const maximumRepetitions = 1000000;
+
+  let repetitions = Math.min(
+    maximumRepetitions,
+    Math.max(20, initialRepetitions)
+  );
+
+  // Riscaldamento iniziale.
+  for (let i = 0; i < 20; i++) {
     operation();
   }
 
+  // Esegue e misura un gruppo di integrazioni.
+  function measureBatch(count) {
+    let checksum = 0;
+    const start = performance.now();
+
+    for (let i = 0; i < count; i++) {
+      checksum += operation().value;
+    }
+
+    return {
+      milliseconds: performance.now() - start,
+      checksum
+    };
+  }
+
+  // Calibrazione: aumenta le ripetizioni finché il gruppo
+  // dura abbastanza oppure viene raggiunto il limite.
+  let calibration = measureBatch(repetitions);
+
+  while (
+    calibration.milliseconds < targetMilliseconds &&
+    repetitions < maximumRepetitions
+  ) {
+    repetitions = Math.min(
+      maximumRepetitions,
+      repetitions * 2
+    );
+
+    calibration = measureBatch(repetitions);
+  }
+
+  // Misure effettive: la calibrazione non entra nella mediana.
   const batchTimes = [];
   let checksum = 0;
 
   for (let batch = 0; batch < 5; batch++) {
-    const start = performance.now();
+    const measurement = measureBatch(repetitions);
 
-    for (let repetition = 0; repetition < repetitions; repetition++) {
-      checksum += operation().value;
-    }
-
-    batchTimes.push(performance.now() - start);
+    batchTimes.push(measurement.milliseconds);
+    checksum += measurement.checksum;
   }
 
   batchTimes.sort((a, b) => a - b);
 
   return {
     microseconds: batchTimes[2] * 1000 / repetitions,
+    repetitions,
+    medianBatchMilliseconds: batchTimes[2],
+    targetReached: batchTimes[2] >= targetMilliseconds,
     checksum
   };
 }
@@ -435,10 +476,17 @@ async function runIntegrationComparison() {
 
       appendIntegrationComparisonRow(timingTable, [
         resolution,
-        midpointTiming.microseconds.toFixed(3),
-        bandsTiming.microseconds.toFixed(3),
-        repetitions,
-        5
+      
+        midpointTiming.microseconds.toFixed(3) +
+          (midpointTiming.targetReached ? "" : " *"),
+      
+        bandsTiming.microseconds.toFixed(3) +
+          (bandsTiming.targetReached ? "" : " *"),
+      
+        `${midpointTiming.repetitions} / ${bandsTiming.repetitions}`,
+      
+        `${midpointTiming.medianBatchMilliseconds.toFixed(1)} / ` +
+          `${bandsTiming.medianBatchMilliseconds.toFixed(1)}`
       ]);
     }
 
