@@ -528,3 +528,68 @@ document.querySelector("#run-integration-comparison").addEventListener(
   "click",
   runIntegrationComparison
 );
+// ---------- Dirichlet and Thomae ----------
+
+// Massimo comune divisore con l'algoritmo di Euclide.
+function integerGcd(a, b) {
+  while (b !== 0) {
+    const remainder = a % b;
+    a = b;
+    b = remainder;
+  }
+
+  return a;
+}
+
+// Calcola le somme sui punti medi razionali (2i + 1)/(2N).
+function computeRationalMidpointSums(N) {
+  const denominator = 2 * N;
+  let thomaeSum = 0;
+
+  for (let i = 0; i < N; i++) {
+    const numerator = 2 * i + 1;
+
+    const divisor = integerGcd(numerator, denominator);
+    const reducedDenominator = denominator / divisor;
+
+    thomaeSum += 1 / reducedDenominator;
+  }
+
+  return {
+    // Tutti i punti scelti sono razionali: D(xᵢ) = 1.
+    dirichlet: 1,
+
+    // Ogni sottointervallo ha larghezza 1/N.
+    thomae: thomaeSum / N
+  };
+}
+
+function runPathologicalExperiment() {
+  const table = document.querySelector("#pathological-results");
+  const status = document.querySelector("#pathological-status");
+
+  table.replaceChildren();
+
+  const resolutions = [
+    10, 30, 100, 300, 1000, 3000, 10000
+  ];
+
+  for (const N of resolutions) {
+    const result = computeRationalMidpointSums(N);
+
+    appendIntegrationComparisonRow(table, [
+      N,
+      formatIntegrationNumber(result.dirichlet),
+      formatIntegrationNumber(result.thomae)
+    ]);
+  }
+
+  status.textContent =
+    "Completed using exact integer fractions for the sample points. " +
+    "Function values and sums are displayed in floating-point arithmetic.";
+}
+
+document.querySelector("#run-pathological-experiment").addEventListener(
+  "click",
+  runPathologicalExperiment
+);
