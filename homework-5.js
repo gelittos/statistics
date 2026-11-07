@@ -170,6 +170,8 @@ function invalidateIntegration() {
   integrationBounds.textContent = "";
   integrationCost.textContent = "";
 
+  clearIntegrationComparison();
+
   integrationStatus.textContent =
     "Parameters changed. Compute the integrals again.";
 }
