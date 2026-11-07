@@ -212,8 +212,8 @@
                 <th scope="col">N = K</th>
                 <th scope="col">Midpoint time, μs</th>
                 <th scope="col">Value-band time, μs</th>
-                <th scope="col">Integrations per batch</th>
-                <th scope="col">Measured batches per method</th>
+                <th scope="col">Integrations per batch: midpoint / bands</th>
+                <th scope="col">Median batch duration, ms: midpoint / bands</th>
               </tr>
             </thead>
       
@@ -222,10 +222,20 @@
         </div>
       
         <p class="desc">
-          Each method is warmed up before timing.
-          Five batches are measured and the median batch time,
-          divided by the number of integrations, is reported.
-          Table updates are excluded from the measured intervals.
+          Each method is warmed up and calibrated separately.
+          The number of repetitions is increased to target a batch
+          duration of at least 20 ms, up to one million integrations
+          per batch. Five new batches are then measured.
+          The median duration divided by the number of integrations
+          gives the reported time per integration.
+          Calibration and table updates are excluded from these measurements.
+        </p>
+        
+        <p class="desc">
+          An asterisk marks a result whose final median batch duration
+          was below 20 ms. Longer measurements reduce the impact of
+          timer resolution, but browser activity and runtime optimizations
+          can still affect the results.
         </p>
       
         <p>
