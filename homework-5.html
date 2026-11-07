@@ -256,6 +256,62 @@
         </p>
       </section>
 
+      <section aria-labelledby="singular-integral-title">
+        <h2 id="singular-integral-title">
+          An integrable singularity: 1/√x
+        </h2>
+      
+        <p>
+          The function 1/√x is unbounded near zero.
+          Its integral on (0, 1] exists as an improper Riemann integral
+          and as a Lebesgue integral, with value 2.
+          It is not a proper Riemann integral of a bounded function
+          on [0, 1].
+        </p>
+      
+        <div class="integration-formula">
+          ∫₀¹ x⁻¹ᐟ² dx
+          = lim ε→0⁺ ∫ε¹ x⁻¹ᐟ² dx
+          = lim ε→0⁺ 2(1 − √ε)
+          = 2
+        </div>
+      
+        <p>
+          The numerical experiment currently uses ε = 0.0001,
+          so both methods integrate over [0.0001, 1].
+          The reference value displayed in the tables is therefore
+          1.98, not 2.
+        </p>
+      
+        <div class="integration-formula">
+          Truncated integral: ∫ε¹ x⁻¹ᐟ² dx = 2(1 − √ε) = 1.98<br>
+          Omitted area: ∫₀ε x⁻¹ᐟ² dx = 2√ε = 0.02
+        </div>
+      
+        <p>
+          Increasing N or K improves the numerical approximation
+          of the truncated integral. It does not remove the omitted
+          area while ε remains fixed.
+          Convergence to the full integral also requires controlling
+          the truncation error.
+        </p>
+      
+        <p>
+          If A approximates the truncated integral, then:
+        </p>
+      
+        <div class="integration-formula">
+          |A − 2| ≤ |A − 1.98| + 0.02
+        </div>
+      
+        <p>
+          For this particular function, the omitted area is known exactly.
+          Adding 0.02 to A gives a corrected estimate of the full integral,
+          whose error equals the numerical error on the truncated interval.
+          Such an exact correction is not generally available.
+        </p>
+      </section>
+
       <section aria-labelledby="integration-interpretation">
         <h2 id="integration-interpretation">How to interpret the results</h2>
 
