@@ -470,3 +470,13 @@ body,h1,h1 span,h2,h3 {
   stroke-width: 2.5;
   stroke-dasharray: 7 5;
 }
+/* Homework 5: integration formulas */
+
+.integration-formula {
+  margin: 18px 0;
+  padding: 16px;
+  border-left: 4px solid #397ec0;
+  background: rgba(57, 126, 192, 0.08);
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
