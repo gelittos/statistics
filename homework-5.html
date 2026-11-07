@@ -605,6 +605,66 @@
           demonstration of numerical accuracy.
         </p>
       </section>
+      <section aria-labelledby="normal-convergence-title">
+        <h2 id="normal-convergence-title">
+          Normal CDF: convergence and efficiency
+        </h2>
+      
+        <p>
+          Compare the two methods at increasing resolutions, using the
+          evaluation point z selected above. The theoretical bounds refer
+          to numerical integration error in exact arithmetic.
+          Floating-point rounding errors are not included.
+        </p>
+      
+        <button id="run-normal-convergence" type="button">
+          Compare CDF resolutions
+        </button>
+      
+        <p id="normal-convergence-status" role="status"></p>
+      
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Accuracy and computational cost</caption>
+            <thead>
+              <tr>
+                <th scope="col">Intervals N</th>
+                <th scope="col">Trapezoidal CDF</th>
+                <th scope="col">Trapezoidal error bound</th>
+                <th scope="col">Simpson CDF</th>
+                <th scope="col">Simpson error bound</th>
+                <th scope="col">Density evaluations per method</th>
+              </tr>
+            </thead>
+            <tbody id="normal-convergence-results"></tbody>
+          </table>
+        </div>
+      
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Median running time per complete CDF evaluation</caption>
+            <thead>
+              <tr>
+                <th scope="col">Intervals N</th>
+                <th scope="col">Trapezoidal time, μs</th>
+                <th scope="col">Simpson time, μs</th>
+                <th scope="col">Repetitions: trapezoidal / Simpson</th>
+                <th scope="col">Median batch time, ms: trapezoidal / Simpson</th>
+              </tr>
+            </thead>
+            <tbody id="normal-convergence-timing"></tbody>
+          </table>
+        </div>
+      
+        <p class="desc">
+          Times depend on the browser and device and exclude table rendering.
+          An asterisk identifies a batch shorter than the timing target.
+          Function-evaluation counts are also reported because very short
+          execution times can be difficult to measure reliably.
+        </p>
+      
+        <p id="normal-convergence-explanation"></p>
+      </section>
     </main>
 
     <footer>
