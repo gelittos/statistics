@@ -16,6 +16,28 @@ const integrationCost = document.querySelector("#integration-cost");
 // measureAtMost(y) restituisce la lunghezza dell'insieme
 // {x nel dominio : f(x) <= y}.
 const integrationFunctions = {
+    singular: {
+    label:
+      "f(x) = 1/√x on [0.0001, 1]. " +
+      "The reference here is the truncated integral, 1.98. " +
+      "The omitted area on (0, 0.0001) is 0.02; " +
+      "the full improper integral is 2.",
+
+    a: 0.0001,
+    b: 1,
+    minValue: 1,
+    maxValue: 100,
+    exact: 2 * (1 - Math.sqrt(0.0001)),
+
+    evaluate: x => 1 / Math.sqrt(x),
+
+    measureAtMost(y) {
+      if (y <= 1) return 0;
+      if (y >= 100) return 1 - 0.0001;
+
+      return 1 - 1 / (y * y);
+    }
+  },
   square: {
     label: "f(x) = x² on [0, 1]",
     a: 0,
