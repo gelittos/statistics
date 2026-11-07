@@ -665,6 +665,129 @@
       
         <p id="normal-convergence-explanation"></p>
       </section>
+      <section aria-labelledby="normal-theory-title">
+        <h2 id="normal-theory-title">
+          Why numerical methods are necessary
+        </h2>
+      
+        <h3>No elementary antiderivative</h3>
+      
+        <p>
+          Elementary functions are built from a finite combination of
+          algebraic operations, roots, exponentials, logarithms and
+          trigonometric functions. Although the normal density is
+          elementary, its antiderivative is not.
+        </p>
+      
+        <p>
+          Liouville's theorem on elementary integration provides a way
+          to prove this impossibility. For the Gaussian exponential,
+          an elementary antiderivative would require a rational
+          function R(x) satisfying the following equation:
+        </p>
+      
+        <div class="integration-formula">
+          R′(x) − xR(x) = 1
+        </div>
+      
+        <p>
+          Such a rational function cannot have a finite pole:
+          differentiation would create a higher-order pole that
+          the other term could not cancel. Therefore R would have
+          to be a polynomial. However, for any nonzero polynomial R,
+          the highest-degree term of −xR cannot be cancelled by R′
+          to produce the constant 1. The zero polynomial also fails.
+          Hence no such rational function exists.
+        </p>
+      
+        <p>
+          This is an application of Liouville's theorem, rather than
+          a complete proof of the theorem itself.
+        </p>
+      
+        <h3>An exact representation using erf</h3>
+      
+        <p>
+          The error function is a special function defined by an
+          integral. It gives an exact analytical representation of
+          the standard normal CDF:
+        </p>
+      
+        <div class="integration-formula">
+          erf(u) = (2 / √π) ∫₀ᵘ exp(−t²) dt
+          <br>
+          Φ(z) = ½ [1 + erf(z / √2)]
+        </div>
+      
+        <p>
+          The relation follows by substituting t = x / √2 in the
+          normal-density integral. Introducing erf gives the integral
+          a standard name and a useful mathematical framework;
+          it does not turn it into an elementary function.
+        </p>
+      
+        <h3>Exact formulas and numerical evaluation</h3>
+      
+        <p>
+          An exact representation and a numerical approximation serve
+          different purposes. The formula describes the function
+          exactly, whereas a numerical algorithm computes a decimal
+          approximation with finite precision.
+        </p>
+      
+        <p>
+          This project uses composite trapezoidal and Simpson rules.
+          Other approaches include integrating the power series of
+          the exponential, or evaluating erf through polynomial or
+          rational approximations. The choice depends on the required
+          accuracy and the range of inputs.
+        </p>
+      
+        <p>
+          A convergent series is not automatically efficient for every
+          input: it may require many terms, and subtracting large terms
+          of opposite sign can cause a loss of numerical precision.
+        </p>
+      
+        <p>
+          For small upper-tail probabilities, a direct implementation
+          of the complementary error function can avoid subtracting
+          two nearly equal numbers:
+        </p>
+      
+        <div class="integration-formula">
+          erfc(u) = 1 − erf(u)
+          <br>
+          P(Z &gt; z) = ½ erfc(z / √2)
+        </div>
+      
+        <p>
+          The numerical implementation of erfc must evaluate the small
+          tail accurately; simply computing 1 − erf(u) can reintroduce
+          the same subtraction problem.
+        </p>
+      
+        <h3>Sources</h3>
+      
+        <ul>
+          <li>
+            <a href="https://virtualmath1.stanford.edu/~conrad/papers/elemint.pdf">
+              Brian Conrad — Impossibility theorems for elementary integration
+            </a>
+          </li>
+          <li>
+            <a href="https://dlmf.nist.gov/7.2">
+              NIST Digital Library of Mathematical Functions —
+              Error-function definitions
+            </a>
+          </li>
+          <li>
+            <a href="https://www.itl.nist.gov/div898/handbook/eda/section3/eda3671.htm">
+              NIST — Standard normal distribution table
+            </a>
+          </li>
+        </ul>
+      </section>
     </main>
 
     <footer>
