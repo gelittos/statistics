@@ -461,6 +461,150 @@
           between a dense measure-zero set and its complement.
         </p>
       </section>
+      <section aria-labelledby="normal-cdf-title">
+        <h2 id="normal-cdf-title">
+          Part 2 · Numerical computation of the normal CDF
+        </h2>
+      
+        <p>
+          For a standard normal random variable Z, the cumulative
+          distribution function Φ(z) gives the probability P(Z ≤ z).
+          The density is:
+        </p>
+      
+        <div class="integration-formula">
+          φ(t) = exp(−t²/2)/√(2π)<br>
+          Φ(z) = ∫₋∞ᶻ φ(t) dt
+        </div>
+      
+        <p>
+          Symmetry allows us to integrate over a finite interval:
+        </p>
+      
+        <div class="integration-formula">
+          Φ(z) = 1/2 + ∫₀ᶻ φ(t) dt, for z ≥ 0<br>
+          Φ(z) = 1/2 − ∫₀⁻ᶻ φ(t) dt, for z &lt; 0
+        </div>
+      
+        <p>
+          This experiment compares the composite trapezoidal rule
+          with composite Simpson's rule.
+          Both use N equal subintervals and N + 1 density evaluations
+          when z is nonzero.
+          Simpson's rule requires an even N.
+        </p>
+      
+        <form id="normal-cdf-form" class="experiment-controls">
+          <div>
+            <label for="normal-cdf-z">Evaluation point z</label>
+            <input
+              id="normal-cdf-z"
+              type="number"
+              min="-4"
+              max="4"
+              step="any"
+              value="1"
+              required
+            >
+          </div>
+      
+          <div>
+            <label for="normal-cdf-intervals">Even number of intervals N</label>
+            <input
+              id="normal-cdf-intervals"
+              type="number"
+              min="2"
+              max="10000"
+              step="2"
+              value="100"
+              required
+            >
+          </div>
+      
+          <button type="submit">Compute normal probabilities</button>
+        </form>
+      
+        <p id="normal-cdf-status" role="status" aria-live="polite"></p>
+      
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>CDF at the selected point</caption>
+      
+            <thead>
+              <tr>
+                <th scope="col">Method</th>
+                <th scope="col">Φ(z)</th>
+                <th scope="col">Density evaluations</th>
+              </tr>
+            </thead>
+      
+            <tbody id="normal-cdf-results"></tbody>
+          </table>
+        </div>
+      
+        <p class="notice">
+          The input is restricted to −4 ≤ z ≤ 4.
+          For very small tail probabilities, subtraction from 1/2
+          can lose relative precision.
+          This implementation is not intended as an extreme-tail routine.
+        </p>
+      </section>
+      
+      <section aria-labelledby="normal-reference-title">
+        <h2 id="normal-reference-title">
+          Comparison with a published reference
+        </h2>
+      
+        <p>
+          Reference values come from the NIST standard normal table.
+          The published table gives the area between 0 and |z|.
+          We add or subtract this area from 1/2 to obtain the CDF.
+        </p>
+      
+        <p>
+          <a
+            href="https://www.itl.nist.gov/div898/handbook/eda/section3/eda3671.htm"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Source: NIST standard normal distribution table
+          </a>
+        </p>
+      
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Comparison at several evaluation points</caption>
+      
+            <thead>
+              <tr>
+                <th scope="col">z</th>
+                <th scope="col">NIST CDF, rounded</th>
+                <th scope="col">Trapezoidal CDF</th>
+                <th scope="col">Difference from reference</th>
+                <th scope="col">Simpson CDF</th>
+                <th scope="col">Difference from reference</th>
+              </tr>
+            </thead>
+      
+            <tbody id="normal-reference-results"></tbody>
+          </table>
+        </div>
+      
+        <p class="desc">
+          Reference values have five decimal places.
+          Differences from these rounded values are not the exact
+          numerical integration errors. Agreement with this table
+          cannot certify additional decimal places.
+        </p>
+      
+        <p id="normal-cdf-checks"></p>
+      
+        <p class="desc">
+          Symmetry is built into the implementation, so passing the
+          symmetry check is a consistency check, not an independent
+          demonstration of numerical accuracy.
+        </p>
+      </section>
     </main>
 
     <footer>
