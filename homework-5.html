@@ -162,6 +162,89 @@
         <p id="integration-cost" class="desc"></p>
       </section>
 
+      <section aria-labelledby="integration-convergence-title">
+        <h2 id="integration-convergence-title">
+          Convergence and computational efficiency
+        </h2>
+      
+        <p>
+          Compare the selected function at increasing resolutions.
+          This experiment uses N = K at each resolution.
+          The individual N and K controls above do not determine
+          the resolutions in this comparison.
+        </p>
+      
+        <button id="run-integration-comparison" type="button">
+          Compare resolutions and running times
+        </button>
+      
+        <p
+          id="integration-comparison-status"
+          role="status"
+          aria-live="polite"
+        ></p>
+      
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Accuracy as resolution increases</caption>
+      
+            <thead>
+              <tr>
+                <th scope="col">N = K</th>
+                <th scope="col">Midpoint approximation</th>
+                <th scope="col">Midpoint absolute error</th>
+                <th scope="col">Value-band approximation</th>
+                <th scope="col">Value-band absolute error</th>
+                <th scope="col">Value-band error bound</th>
+              </tr>
+            </thead>
+      
+            <tbody id="integration-convergence-results"></tbody>
+          </table>
+        </div>
+      
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Median running time per complete integration</caption>
+      
+            <thead>
+              <tr>
+                <th scope="col">N = K</th>
+                <th scope="col">Midpoint time, μs</th>
+                <th scope="col">Value-band time, μs</th>
+                <th scope="col">Integrations per batch</th>
+                <th scope="col">Measured batches per method</th>
+              </tr>
+            </thead>
+      
+            <tbody id="integration-timing-results"></tbody>
+          </table>
+        </div>
+      
+        <p class="desc">
+          Each method is warmed up before timing.
+          Five batches are measured and the median batch time,
+          divided by the number of integrations, is reported.
+          Table updates are excluded from the measured intervals.
+        </p>
+      
+        <p>
+          Both implementations perform a number of loop iterations
+          proportional to their resolution. However, evaluating f(x)
+          and evaluating an analytical preimage-measure formula
+          are different operations.
+          Timing results depend on the function, browser and device.
+        </p>
+      
+        <p class="desc">
+          Browser scheduling, timer resolution and background activity
+          introduce noise. Small timing differences should not be
+          interpreted as reliable performance advantages.
+          Errors near floating-point precision should not be used
+          to infer convergence rates.
+        </p>
+      </section>
+
       <section aria-labelledby="integration-interpretation">
         <h2 id="integration-interpretation">How to interpret the results</h2>
 
