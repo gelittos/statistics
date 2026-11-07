@@ -347,6 +347,120 @@
           can make particular cases unusually accurate.
         </p>
       </section>
+      <section aria-labelledby="pathological-title">
+        <h2 id="pathological-title">
+          Pathological examples and the limits of sampling
+        </h2>
+      
+        <h3>Dirichlet's function</h3>
+      
+        <div class="integration-formula">
+          D(x) = 1 if x is rational<br>
+          D(x) = 0 if x is irrational<br>
+          Domain: [0, 1]
+        </div>
+      
+        <p>
+          Every nonempty interval contains both rational and irrational
+          numbers. Therefore, every lower Darboux sum is 0 and every
+          upper Darboux sum is 1.
+          The function is not Riemann-integrable.
+        </p>
+      
+        <p>
+          The rational numbers form a countable set of Lebesgue measure zero.
+          Consequently, D is zero almost everywhere and its
+          Lebesgue integral is 0.
+          “Almost everywhere” means outside a set of measure zero.
+        </p>
+      
+        <p>
+          A Riemann sum using only rational sample points is always 1.
+          One using only irrational sample points is always 0.
+          Refining the partition does not resolve this disagreement.
+        </p>
+      
+        <h3>Thomae's function</h3>
+      
+        <div class="integration-formula">
+          T(x) = 1/q if x = p/q in lowest terms, with q &gt; 0<br>
+          T(x) = 0 if x is irrational<br>
+          Domain: [0, 1]
+        </div>
+      
+        <p>
+          Thomae's function is continuous at irrational points
+          and discontinuous at rational points.
+          Its discontinuity set has measure zero, so the bounded
+          function is Riemann-integrable.
+          Its Riemann and Lebesgue integrals are both 0.
+        </p>
+      
+        <p>
+          For any positive threshold, only finitely many rational points
+          in [0, 1] have function values above that threshold.
+          These finitely many tall peaks can be enclosed in intervals
+          of arbitrarily small total length.
+          All remaining values are small.
+          This explains why the integral is zero despite the dense
+          set of rational points.
+        </p>
+      
+        <h3>An exact rational-grid experiment</h3>
+      
+        <p>
+          We use the midpoints xᵢ = (2i + 1)/(2N),
+          for i = 0, …, N − 1.
+          Numerators and denominators are handled as integers.
+          For Thomae's function, each fraction is reduced before
+          evaluating 1/q.
+        </p>
+      
+        <button id="run-pathological-experiment" type="button">
+          Compare rational midpoint sums
+        </button>
+      
+        <p id="pathological-status" role="status" aria-live="polite"></p>
+      
+        <div class="table-scroll">
+          <table class="results-table">
+            <caption>Uniform rational midpoint sums on [0, 1]</caption>
+      
+            <thead>
+              <tr>
+                <th scope="col">Intervals N</th>
+                <th scope="col">Dirichlet midpoint sum</th>
+                <th scope="col">Thomae midpoint sum</th>
+              </tr>
+            </thead>
+      
+            <tbody id="pathological-results"></tbody>
+          </table>
+        </div>
+      
+        <p class="notice">
+          This experiment evaluates known rational points.
+          It does not test whether arbitrary real numbers are rational.
+          Finite JavaScript floating-point numbers are rational;
+          they cannot directly represent arbitrary irrational sample points.
+        </p>
+      
+        <p>
+          For Dirichlet's function, the rational midpoint sums remain 1,
+          despite the Lebesgue integral being 0.
+          For Thomae's function, the sums approach 0, but need not
+          decrease at every tested resolution.
+          One observed sequence of sums alone is not a proof
+          of Riemann integrability.
+        </p>
+      
+        <p>
+          Countability and measure, rather than numerical sampling alone,
+          determine the Lebesgue integrals in these examples.
+          A finite sample cannot generally detect the distinction
+          between a dense measure-zero set and its complement.
+        </p>
+      </section>
     </main>
 
     <footer>
