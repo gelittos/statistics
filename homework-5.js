@@ -593,3 +593,241 @@ document.querySelector("#run-pathological-experiment").addEventListener(
   "click",
   runPathologicalExperiment
 );
+// ---------- Part 2: standard normal CDF ----------
+
+const normalCdfForm = document.querySelector("#normal-cdf-form");
+const normalCdfZInput = document.querySelector("#normal-cdf-z");
+const normalCdfNInput = document.querySelector("#normal-cdf-intervals");
+
+const normalCdfStatus = document.querySelector("#normal-cdf-status");
+const normalCdfResults = document.querySelector("#normal-cdf-results");
+const normalReferenceResults =
+  document.querySelector("#normal-reference-results");
+const normalCdfChecks = document.querySelector("#normal-cdf-checks");
+
+// Area fra 0 e |z|, trascritta dalla tabella NIST.
+// I valori pubblicati sono arrotondati a cinque decimali.
+const normalReferenceAreas = [
+  { z: 0, area: 0.00000 },
+  { z: 0.5, area: 0.19146 },
+  { z: 1, area: 0.34134 },
+  { z: 1.5, area: 0.43319 },
+  { z: 2, area: 0.47725 },
+  { z: 2.5, area: 0.49379 },
+  { z: 3, area: 0.49865 }
+];
+
+// Densità della normale standard.
+function standardNormalPdf(t) {
+  return Math.exp(-t * t / 2) / Math.sqrt(2 * Math.PI);
+}
+
+// Integra la densità da 0 a upper.
+function integrateNormalDensity(upper, N, method) {
+  if (upper === 0) {
+    return { area: 0, evaluations: 0 };
+  }
+
+  const h = upper / N;
+  let sum;
+
+  if (method === "trapezoid") {
+    sum = (
+      standardNormalPdf(0) +
+      standardNormalPdf(upper)
+    ) / 2;
+
+    for (let i = 1; i < N; i++) {
+      sum += standardNormalPdf(i * h);
+    }
+
+    return {
+      area: h * sum,
+      evaluations: N + 1
+    };
+  }
+
+  if (method === "simpson") {
+    if (N % 2 !== 0) {
+      throw new Error("Simpson's rule requires an even N.");
+    }
+
+    sum =
+      standardNormalPdf(0) +
+      standardNormalPdf(upper);
+
+    for (let i = 1; i < N; i++) {
+      const weight = i % 2 === 0 ? 2 : 4;
+      sum += weight * standardNormalPdf(i * h);
+    }
+
+    return {
+      area: h * sum / 3,
+      evaluations: N + 1
+    };
+  }
+
+  throw new Error("Unknown integration method.");
+}
+
+// Ricostruisce la CDF usando la simmetria.
+function computeNormalCdf(z, N, method) {
+  const integral = integrateNormalDensity(
+    Math.abs(z),
+    N,
+    method
+  );
+
+  return {
+    value: z >= 0
+      ? 0.5 + integral.area
+      : 0.5 - integral.area,
+
+    evaluations: integral.evaluations
+  };
+}
+
+// Costruisce i riferimenti positivi e negativi dalla tabella delle aree.
+function buildNormalReferencePoints() {
+  const points = [];
+
+  for (const entry of normalReferenceAreas) {
+    if (entry.z === 0) {
+      points.push({ z: 0, cdf: 0.5 });
+    } else {
+      points.push({
+        z: -entry.z,
+        cdf: 0.5 - entry.area
+      });
+
+      points.push({
+        z: entry.z,
+        cdf: 0.5 + entry.area
+      });
+    }
+  }
+
+  return points.sort((a, b) => a.z - b.z);
+}
+
+function clearNormalCdfResults() {
+  normalCdfResults.replaceChildren();
+  normalReferenceResults.replaceChildren();
+
+  normalCdfChecks.textContent = "";
+  normalCdfStatus.textContent =
+    "Parameters changed. Compute the probabilities again.";
+}
+
+function runNormalCdfExperiment() {
+  clearNormalCdfResults();
+
+  try {
+    const z = normalCdfZInput.valueAsNumber;
+    const N = normalCdfNInput.valueAsNumber;
+
+    if (!Number.isFinite(z) || z < -4 || z > 4) {
+      throw new Error("Choose a finite z between −4 and 4.");
+    }
+
+    if (
+      !Number.isInteger(N) ||
+      N < 2 ||
+      N > 10000 ||
+      N % 2 !== 0
+    ) {
+      throw new Error("Choose an even N between 2 and 10000.");
+    }
+
+    for (const method of ["trapezoid", "simpson"]) {
+      const result = computeNormalCdf(z, N, method);
+
+      appendIntegrationComparisonRow(normalCdfResults, [
+        method === "trapezoid" ? "Trapezoidal rule" : "Simpson's rule",
+        formatIntegrationNumber(result.value),
+        result.evaluations
+      ]);
+    }
+
+    const referencePoints = buildNormalReferencePoints();
+
+    for (const point of referencePoints) {
+      const trapezoid = computeNormalCdf(
+        point.z, N, "trapezoid"
+      ).value;
+
+      const simpson = computeNormalCdf(
+        point.z, N, "simpson"
+      ).value;
+
+      appendIntegrationComparisonRow(normalReferenceResults, [
+        point.z,
+        point.cdf.toFixed(5),
+        formatIntegrationNumber(trapezoid),
+        formatIntegrationNumber(Math.abs(trapezoid - point.cdf)),
+        formatIntegrationNumber(simpson),
+        formatIntegrationNumber(Math.abs(simpson - point.cdf))
+      ]);
+    }
+
+    // Controlli su una griglia di punti fra −4 e 4.
+    const checkPoints = Array.from(
+      { length: 81 },
+      (_, i) => -4 + i / 10
+    );
+
+    const checkMessages = [];
+
+    for (const method of ["trapezoid", "simpson"]) {
+      const values = checkPoints.map(
+        point => computeNormalCdf(point, N, method).value
+      );
+
+      const inRange = values.every(
+        value => Number.isFinite(value) && value >= 0 && value <= 1
+      );
+
+      const monotone = values.every(
+        (value, index) =>
+          index === 0 || value >= values[index - 1] - 1e-12
+      );
+
+      let symmetryError = 0;
+
+      for (const point of [0.5, 1, 2, 3, 4]) {
+        const positive = computeNormalCdf(point, N, method).value;
+        const negative = computeNormalCdf(-point, N, method).value;
+
+        symmetryError = Math.max(
+          symmetryError,
+          Math.abs(positive + negative - 1)
+        );
+      }
+
+      checkMessages.push(
+        `${method}: range ${inRange ? "PASS" : "FAIL"}, ` +
+        `monotonicity on the test grid ${monotone ? "PASS" : "FAIL"}, ` +
+        `maximum symmetry residual ` +
+        `${formatIntegrationNumber(symmetryError)}`
+      );
+    }
+
+    normalCdfChecks.textContent = checkMessages.join(". ");
+
+    normalCdfStatus.textContent =
+      `Completed with N = ${N}. ` +
+      `The selected point and reference table use the same resolution.`;
+  } catch (error) {
+    normalCdfStatus.textContent = error.message;
+  }
+}
+
+normalCdfForm.addEventListener("submit", event => {
+  event.preventDefault();
+  runNormalCdfExperiment();
+});
+
+normalCdfZInput.addEventListener("input", clearNormalCdfResults);
+normalCdfNInput.addEventListener("input", clearNormalCdfResults);
+
+runNormalCdfExperiment();
