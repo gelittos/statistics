@@ -831,3 +831,190 @@ normalCdfZInput.addEventListener("input", clearNormalCdfResults);
 normalCdfNInput.addEventListener("input", clearNormalCdfResults);
 
 runNormalCdfExperiment();
+const normalConvergenceButton =
+  document.querySelector("#run-normal-convergence");
+
+const normalConvergenceStatus =
+  document.querySelector("#normal-convergence-status");
+
+const normalConvergenceResults =
+  document.querySelector("#normal-convergence-results");
+
+const normalConvergenceTiming =
+  document.querySelector("#normal-convergence-timing");
+
+const normalConvergenceExplanation =
+  document.querySelector("#normal-convergence-explanation");
+
+function clearNormalConvergence() {
+  normalConvergenceResults.replaceChildren();
+  normalConvergenceTiming.replaceChildren();
+  normalConvergenceExplanation.textContent = "";
+  normalConvergenceStatus.textContent = "";
+}
+
+// Limiti conservativi validi per le derivate della densità normale:
+// |φ''(t)| ≤ 1 e |φ''''(t)| ≤ 4.
+function normalIntegrationErrorBounds(z, intervals) {
+  const length = Math.abs(z);
+  const h = length / intervals;
+
+  return {
+    trapezoid: length * h ** 2 / 12,
+    simpson: 4 * length * h ** 4 / 180
+  };
+}
+
+async function runNormalConvergence() {
+  clearNormalConvergence();
+
+  const z = normalCdfZInput.valueAsNumber;
+
+  if (!Number.isFinite(z) || z < -4 || z > 4) {
+    normalConvergenceStatus.textContent =
+      "Choose a finite value of z between -4 and 4.";
+    return;
+  }
+
+  if (z === 0) {
+    normalConvergenceStatus.textContent =
+      "At z = 0, the CDF is exactly 0.5 by symmetry. " +
+      "Choose a nonzero z to compare numerical integration methods.";
+    return;
+  }
+
+  const controls = [
+    normalConvergenceButton,
+    ...normalCdfForm.querySelectorAll("input, button, select")
+  ];
+
+  const previousDisabledStates =
+    controls.map(control => control.disabled);
+
+  controls.forEach(control => {
+    control.disabled = true;
+  });
+
+  try {
+    const resolutions = [10, 30, 100, 300, 1000];
+
+    for (const [index, intervals] of resolutions.entries()) {
+      normalConvergenceStatus.textContent =
+        `Computing z = ${z}, N = ${intervals}...`;
+
+      // Consente al browser di aggiornare il messaggio.
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      const trapezoid =
+        computeNormalCdf(z, intervals, "trapezoid");
+
+      const simpson =
+        computeNormalCdf(z, intervals, "simpson");
+
+      const bounds =
+        normalIntegrationErrorBounds(z, intervals);
+
+      appendIntegrationComparisonRow(
+        normalConvergenceResults,
+        [
+          intervals,
+          formatIntegrationNumber(trapezoid.value),
+          formatIntegrationNumber(bounds.trapezoid),
+          formatIntegrationNumber(simpson.value),
+          formatIntegrationNumber(bounds.simpson),
+          trapezoid.evaluations
+        ]
+      );
+
+      const initialRepetitions =
+        Math.max(20, Math.ceil(100000 / intervals));
+
+      const trapezoidOperation = () =>
+        computeNormalCdf(z, intervals, "trapezoid");
+
+      const simpsonOperation = () =>
+        computeNormalCdf(z, intervals, "simpson");
+
+      let trapezoidTiming;
+      let simpsonTiming;
+
+      // Alterna l'ordine per limitare gli effetti
+      // sistematici dell'ordine di esecuzione.
+      if (index % 2 === 0) {
+        trapezoidTiming = benchmarkIntegration(
+          trapezoidOperation,
+          initialRepetitions
+        );
+
+        simpsonTiming = benchmarkIntegration(
+          simpsonOperation,
+          initialRepetitions
+        );
+      } else {
+        simpsonTiming = benchmarkIntegration(
+          simpsonOperation,
+          initialRepetitions
+        );
+
+        trapezoidTiming = benchmarkIntegration(
+          trapezoidOperation,
+          initialRepetitions
+        );
+      }
+
+      if (
+        !Number.isFinite(trapezoidTiming.checksum) ||
+        !Number.isFinite(simpsonTiming.checksum)
+      ) {
+        throw new Error("The timing calculation returned an invalid result.");
+      }
+
+      const formatTime = timing =>
+        timing.microseconds.toFixed(3) +
+        (timing.targetReached ? "" : " *");
+
+      appendIntegrationComparisonRow(
+        normalConvergenceTiming,
+        [
+          intervals,
+          formatTime(trapezoidTiming),
+          formatTime(simpsonTiming),
+          `${trapezoidTiming.repetitions} / ` +
+            `${simpsonTiming.repetitions}`,
+          `${trapezoidTiming.medianBatchMilliseconds.toFixed(1)} / ` +
+            `${simpsonTiming.medianBatchMilliseconds.toFixed(1)}`
+        ]
+      );
+    }
+
+    normalConvergenceExplanation.textContent =
+      "The trapezoidal error bound decreases as 1/N², " +
+      "whereas Simpson's bound decreases as 1/N⁴. " +
+      "Both methods evaluate the density N + 1 times. " +
+      "For this smooth integrand, Simpson's rule can therefore " +
+      "reach a given accuracy with fewer intervals. " +
+      "The bounds are conservative, not measured errors. " +
+      "At very high resolutions, floating-point rounding " +
+      "limits the benefit of further refinement.";
+
+    normalConvergenceStatus.textContent =
+      `Comparison completed at z = ${z}. ` +
+      "All resolutions use the same evaluation point.";
+  } catch (error) {
+    normalConvergenceStatus.textContent = error.message;
+  } finally {
+    controls.forEach((control, index) => {
+      control.disabled = previousDisabledStates[index];
+    });
+  }
+}
+
+normalConvergenceButton.addEventListener(
+  "click",
+  runNormalConvergence
+);
+
+normalCdfZInput.addEventListener(
+  "input",
+  clearNormalConvergence
+);
