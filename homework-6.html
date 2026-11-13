@@ -175,7 +175,85 @@
             association in these data. They do not establish causality
             or, by themselves, justify conclusions about a real population.
           </p>
-</section>
+        </section>
+        <section aria-labelledby="chi-square-title">
+          <h2 id="chi-square-title">
+            Expected counts and the chi-square test
+          </h2>
+        
+          <p>
+            H₀: training category and phishing outcome are independent.
+            H₁: the two variables are associated.
+            We use a significance level of α = 0.05.
+          </p>
+        
+          <p>
+            Under independence, the expected count in each cell is its
+            row total multiplied by its column total, divided by the
+            total number of observations.
+          </p>
+        
+          <div class="integration-formula">
+            Eᵢⱼ = row totalᵢ × column totalⱼ / n
+            <br>
+            χ² = Σᵢ Σⱼ (Oᵢⱼ − Eᵢⱼ)² / Eᵢⱼ
+            <br>
+            Degrees of freedom = (rows − 1)(columns − 1)
+          </div>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Expected absolute frequencies under independence</caption>
+              <thead id="expected-counts-head"></thead>
+              <tbody id="expected-counts-body"></tbody>
+            </table>
+          </div>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Contribution of each cell to χ²</caption>
+              <thead id="chi-contributions-head"></thead>
+              <tbody id="chi-contributions-body"></tbody>
+            </table>
+          </div>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Test summary</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Quantity</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody id="chi-summary-body"></tbody>
+            </table>
+          </div>
+        
+          <p id="chi-assumptions"></p>
+          <p id="chi-decision"></p>
+        
+          <p class="desc">
+            The p-value uses the asymptotic chi-square distribution.
+            For this table, there are two degrees of freedom,
+            so the upper-tail probability is exp(−χ²/2).
+            This shortcut is specific to two degrees of freedom.
+          </p>
+        
+          <p class="notice">
+            The dataset was deliberately constructed rather than randomly
+            sampled. The test calculation is an educational demonstration,
+            not evidence about a real population or the causal effect
+            of security training.
+          </p>
+        
+          <p>
+            Reference:
+            <a href="https://www.itl.nist.gov/div898/handbook/prc/section4/prc45.htm">
+              NIST — Contingency tables and the chi-square test
+            </a>.
+          </p>
+        </section>
       </main>
 
       <footer>
