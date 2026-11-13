@@ -104,6 +104,78 @@
 
           <p id="contingency-check" role="status"></p>
         </section>
+        <section aria-labelledby="relative-frequencies-title">
+          <h2 id="relative-frequencies-title">
+            Joint, marginal and conditional frequencies
+          </h2>
+        
+          <h3>Joint and marginal relative frequencies</h3>
+        
+          <p>
+            Each internal cell is divided by the total number of observations.
+            The final column and final row show marginal relative frequencies.
+            The internal cells sum to 100%.
+          </p>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Joint and marginal relative frequencies</caption>
+              <thead id="joint-frequency-head"></thead>
+              <tbody id="joint-frequency-body"></tbody>
+              <tfoot id="joint-frequency-foot"></tfoot>
+            </table>
+          </div>
+        
+          <h3>Outcome conditional on training</h3>
+        
+          <p>
+            Each cell is divided by its row total.
+            Each row therefore sums to 100%.
+            These percentages describe the outcome distribution
+            within each training category.
+          </p>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Conditional relative frequencies: F given X</caption>
+              <thead id="outcome-given-training-head"></thead>
+              <tbody id="outcome-given-training-body"></tbody>
+            </table>
+          </div>
+        
+          <h3>Training conditional on outcome</h3>
+        
+          <p>
+            Each cell is divided by its column total.
+            Each column therefore sums to 100%.
+            These percentages describe the training distribution
+            within each outcome category.
+          </p>
+        
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Conditional relative frequencies: X given F</caption>
+              <thead id="training-given-outcome-head"></thead>
+              <tbody id="training-given-outcome-body"></tbody>
+            </table>
+          </div>
+        
+          <p class="desc">
+            Percentages are calculated from the unrounded counts.
+            Displayed values may not sum to exactly 100% because of rounding.
+          </p>
+        
+          <h3>What changes when training is known?</h3>
+        
+          <p id="conditional-frequency-comment"></p>
+        
+          <p class="notice">
+            These are empirical frequencies from a constructed dataset.
+            Differences between conditional frequencies describe an
+            association in these data. They do not establish causality
+            or, by themselves, justify conclusions about a real population.
+          </p>
+</section>
       </main>
 
       <footer>
