@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta
+      name="description"
+      content="Statistical independence: contingency tables, conditional frequencies and the chi-square test."
+    >
+
+    <title>Homework 6 | Gabriele Sottile · 2205153</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="styles.css">
+  </head>
+
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <div class="wrap">
+      <header class="top">
+        <a class="brand" href="index.html">STATISTICS</a>
+        <span class="meta">
+          MSc in Cybersecurity · A.Y. 2026/27
+        </span>
+      </header>
+
+      <main id="main">
+        <a class="back" href="index.html">← All homework</a>
+
+        <section class="hero">
+          <div class="eyebrow">Homework 06</div>
+          <h1>Statistical Independence</h1>
+
+          <p class="intro">
+            Contingency tables, conditional frequencies and
+            the chi-square test of independence.
+          </p>
+        </section>
+
+        <section aria-labelledby="dataset-title">
+          <h2 id="dataset-title">The bivariate dataset</h2>
+
+          <p>
+            Each observation represents one person and one response
+            to a phishing message. X is the person's security-training
+            category. F records whether the person clicked the link.
+          </p>
+
+          <p class="notice">
+            This is a deliberately constructed synthetic dataset.
+            It illustrates statistical calculations and does not
+            provide evidence about real training programmes.
+          </p>
+
+          <p id="dataset-summary"></p>
+
+          <details>
+            <summary>Inspect the individual observations</summary>
+
+            <div class="table-scroll">
+              <table class="results-table">
+                <caption>Individual records</caption>
+
+                <thead>
+                  <tr>
+                    <th scope="col">Person</th>
+                    <th scope="col">X: training</th>
+                    <th scope="col">F: outcome</th>
+                  </tr>
+                </thead>
+
+                <tbody id="independence-records"></tbody>
+              </table>
+            </div>
+          </details>
+        </section>
+
+        <section aria-labelledby="contingency-title">
+          <h2 id="contingency-title">Observed contingency table</h2>
+
+          <p>
+            Each cell counts observations belonging to both
+            a training category and an outcome category.
+            Row and column totals are marginal counts.
+          </p>
+
+          <div class="table-scroll">
+            <table class="results-table">
+              <caption>Observed absolute frequencies</caption>
+              <thead id="contingency-head"></thead>
+              <tbody id="contingency-body"></tbody>
+              <tfoot id="contingency-foot"></tfoot>
+            </table>
+          </div>
+
+          <p id="contingency-check" role="status"></p>
+        </section>
+      </main>
+
+      <footer>
+        <span>Gabriele Sottile · Student ID 2205153</span>
+        <span>Statistics · Sapienza University of Rome</span>
+      </footer>
+    </div>
+
+    <script src="homework-6.js"></script>
+  </body>
+</html>
