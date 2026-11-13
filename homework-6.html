@@ -254,6 +254,178 @@
             </a>.
           </p>
         </section>
+        <section aria-labelledby="independence-theory-title">
+          <h2 id="independence-theory-title">
+            Independence in probability and statistics
+          </h2>
+        
+          <h3>Independence in probability</h3>
+        
+          <p>
+            Two categorical random variables X and F are independent
+            when their joint probabilities equal the products of
+            their marginal probabilities for every pair of categories.
+          </p>
+        
+          <div class="integration-formula">
+            P(X = xᵢ, F = fⱼ) = P(X = xᵢ) P(F = fⱼ)
+          </div>
+        
+          <p>
+            Equivalently, whenever P(X = xᵢ) is positive, knowing X
+            does not change the probability distribution of F.
+            Independence is symmetric: knowing F does not change
+            the distribution of X either.
+          </p>
+        
+          <div class="integration-formula">
+            P(F = fⱼ | X = xᵢ) = P(F = fⱼ)
+          </div>
+        
+          <h3>Independence in the empirical distribution</h3>
+        
+          <p>
+            In a dataset, probabilities are replaced by observed
+            relative frequencies. Exact empirical independence
+            requires each joint relative frequency to equal
+            the product of the corresponding marginal frequencies.
+          </p>
+        
+          <div class="integration-formula">
+            Oᵢⱼ / n = (row totalᵢ / n)(column totalⱼ / n)
+            <br>
+            Equivalently: Oᵢⱼ = Eᵢⱼ for every cell
+          </div>
+        
+          <p>
+            Our dataset does not satisfy exact empirical independence.
+            The overall click frequency is 50%, whereas the conditional
+            click frequencies are 70%, 50% and 30% for the None,
+            Basic and Advanced categories.
+          </p>
+        
+          <h3>Independence as a statistical hypothesis</h3>
+        
+          <p>
+            Even when variables are independent in a population,
+            a random sample will usually contain differences between
+            observed and expected counts. Exact equality is therefore
+            not required in a sample for the independence model
+            to remain plausible.
+          </p>
+        
+          <p>
+            The chi-square test evaluates the size of these differences
+            relative to what the independence model predicts.
+            A small p-value provides evidence against the null hypothesis,
+            provided the sampling assumptions and the chi-square
+            approximation are appropriate.
+          </p>
+        
+          <p>
+            Failure to reject the null hypothesis does not prove
+            independence. A small sample, for example, may not provide
+            enough information to detect an existing association.
+          </p>
+        
+          <h3>Two different uses of the word independent</h3>
+        
+          <p>
+            Independence between X and F is the hypothesis being tested.
+            Independence between observations is a condition of the
+            usual test. These are different ideas.
+          </p>
+        
+          <p>
+            For example, recording many responses from the same person
+            may produce dependent observations, even if each response
+            occupies a separate row in the dataset. The contingency
+            table alone cannot reveal or resolve this problem.
+          </p>
+        </section>
+        
+        <section aria-labelledby="association-causality-title">
+          <h2 id="association-causality-title">
+            Association does not establish causality
+          </h2>
+        
+          <p>
+            An association means that the distribution of one variable
+            differs across categories of the other variable.
+            A causal claim is stronger: it states that changing one
+            variable would change the other.
+          </p>
+        
+          <p>
+            In a real observational dataset, people with advanced
+            training might also have more professional experience,
+            different job roles or greater previous awareness of
+            phishing. These factors could help explain differences
+            in clicking behaviour.
+          </p>
+        
+          <p>
+            A chi-square test does not control for these alternative
+            explanations and does not identify the direction of causation.
+            A carefully designed randomized experiment could provide
+            stronger evidence about the effect of training.
+          </p>
+        
+          <p class="notice">
+            In this homework, the counts were chosen deliberately.
+            The observed association illustrates the method and
+            cannot establish any real-world causal effect.
+          </p>
+        </section>
+        
+        <section aria-labelledby="independence-conclusions-title">
+          <h2 id="independence-conclusions-title">
+            Results and conclusions
+          </h2>
+        
+          <ul>
+            <li>
+              The dataset contains 120 observations, classified into
+              three training categories and two phishing outcomes.
+            </li>
+        
+            <li>
+              Conditional click frequencies are 70%, 50% and 30%,
+              compared with an overall frequency of 50%.
+              Therefore, the empirical distribution is not independent.
+            </li>
+        
+            <li>
+              Under independence, all six expected counts equal 20.
+              Pearson's chi-square statistic is 12.8, with two
+              degrees of freedom.
+            </li>
+        
+            <li>
+              The asymptotic p-value is approximately 0.001662.
+              Under appropriate sampling assumptions, this would lead
+              to rejection of independence at the 5% significance level.
+            </li>
+        
+            <li>
+              Because these data were deliberately constructed,
+              the calculation is illustrative rather than an inference
+              about a real population.
+            </li>
+        
+            <li>
+              Statistical association alone does not demonstrate
+              that training causes a change in phishing behaviour.
+            </li>
+          </ul>
+        
+          <p class="desc">
+            Statistical significance does not by itself measure
+            the practical importance of an association. Interpretation
+            should also consider the observed percentages, sample size,
+            study design and application context.
+          </p>
+        </section>
       </main>
 
       <footer>
