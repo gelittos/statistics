@@ -326,3 +326,180 @@ renderJointFrequencies();
 renderConditionalFrequencies("training");
 renderConditionalFrequencies("outcome");
 renderConditionalComment();
+const independenceAlpha = 0.05;
+
+function calculateIndependenceTest() {
+  const rows = trainingCategories.length;
+  const columns = outcomeCategories.length;
+
+  if (sampleSize === 0 || rows < 2 || columns < 2) {
+    throw new Error(
+      "The test requires observations and at least two categories per variable."
+    );
+  }
+
+  const expected = [];
+  const contributions = [];
+
+  let chiSquare = 0;
+  let minimumExpected = Infinity;
+
+  for (let i = 0; i < rows; i++) {
+    const expectedRow = [];
+    const contributionRow = [];
+
+    for (let j = 0; j < columns; j++) {
+      const expectedCount =
+        rowTotals[i] * columnTotals[j] / sampleSize;
+
+      if (expectedCount <= 0) {
+        throw new Error(
+          "Expected counts must be positive. Remove empty categories."
+        );
+      }
+
+      const difference =
+        observedCounts[i][j] - expectedCount;
+
+      const contribution =
+        difference ** 2 / expectedCount;
+
+      expectedRow.push(expectedCount);
+      contributionRow.push(contribution);
+
+      chiSquare += contribution;
+
+      minimumExpected = Math.min(
+        minimumExpected,
+        expectedCount
+      );
+    }
+
+    expected.push(expectedRow);
+    contributions.push(contributionRow);
+  }
+
+  const degreesOfFreedom = (rows - 1) * (columns - 1);
+
+  // Questa formula vale soltanto con due gradi di libertà.
+  const pValue = degreesOfFreedom === 2
+    ? Math.exp(-chiSquare / 2)
+    : null;
+
+  return {
+    expected,
+    contributions,
+    chiSquare,
+    degreesOfFreedom,
+    pValue,
+    minimumExpected
+  };
+}
+
+function renderIndependenceMatrix(prefix, matrix) {
+  renderFrequencyHeader(`#${prefix}-head`);
+
+  const body = document.querySelector(`#${prefix}-body`);
+  body.replaceChildren();
+
+  for (let i = 0; i < trainingCategories.length; i++) {
+    const row = document.createElement("tr");
+
+    row.append(
+      makeIndependenceCell("th", trainingCategories[i], "row")
+    );
+
+    for (const value of matrix[i]) {
+      row.append(
+        makeIndependenceCell("td", value.toFixed(4))
+      );
+    }
+
+    body.append(row);
+  }
+}
+
+function renderIndependenceTest() {
+  const summaryBody = document.querySelector("#chi-summary-body");
+  const assumptions = document.querySelector("#chi-assumptions");
+  const decision = document.querySelector("#chi-decision");
+
+  summaryBody.replaceChildren();
+  assumptions.textContent = "";
+  decision.textContent = "";
+
+  try {
+    const test = calculateIndependenceTest();
+
+    renderIndependenceMatrix(
+      "expected-counts",
+      test.expected
+    );
+
+    renderIndependenceMatrix(
+      "chi-contributions",
+      test.contributions
+    );
+
+    const summary = [
+      ["Observations n", sampleSize],
+      ["Pearson chi-square", test.chiSquare.toFixed(4)],
+      ["Degrees of freedom", test.degreesOfFreedom],
+      ["Significance level α", independenceAlpha.toFixed(2)],
+      [
+        "Asymptotic p-value",
+        test.pValue === null
+          ? "Not computed: this implementation requires df = 2."
+          : test.pValue.toPrecision(6)
+      ],
+      ["Minimum expected count", test.minimumExpected.toFixed(4)]
+    ];
+
+    for (const [label, value] of summary) {
+      const row = document.createElement("tr");
+
+      row.append(
+        makeIndependenceCell("th", label, "row"),
+        makeIndependenceCell("td", value)
+      );
+
+      summaryBody.append(row);
+    }
+
+    const adequateExpectedCounts = test.minimumExpected >= 5;
+
+    assumptions.textContent =
+      (adequateExpectedCounts
+        ? "All expected counts are at least 5. "
+        : "Some expected counts are below 5; the chi-square approximation may be unreliable. ") +
+      "Population inference also requires independent observations " +
+      "and an appropriate sampling design. These conditions " +
+      "cannot be established from the contingency table alone.";
+
+    if (test.pValue === null) {
+      decision.textContent =
+        "The statistic has been computed, but no p-value-based " +
+        "decision is reported for these degrees of freedom.";
+    } else if (!adequateExpectedCounts) {
+      decision.textContent =
+        "The asymptotic p-value is shown for reference. " +
+        "No automatic decision is reported because the " +
+        "conservative expected-count check was not met.";
+    } else if (test.pValue < independenceAlpha) {
+      decision.textContent =
+        "Under the test assumptions, this p-value would lead " +
+        "to rejection of H₀ at α = 0.05. The observed counts " +
+        "provide evidence against independence in that model. " +
+        "Here, the association is deliberately built into synthetic data.";
+    } else {
+      decision.textContent =
+        "Under the test assumptions, H₀ would not be rejected " +
+        "at α = 0.05. This does not prove independence: the data " +
+        "may contain an association that the test cannot detect.";
+    }
+  } catch (error) {
+    decision.textContent = error.message;
+  }
+}
+
+renderIndependenceTest();
